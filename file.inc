@@ -262,8 +262,12 @@ status: .res 1
 
 loop:
     jsr CHRIN
-    cmp #13
-    beq eol
+    pha
+    
+    jsr READST
+    bne eol
+    
+    pla
 
     ldx index
     cpx #2
@@ -273,14 +277,16 @@ loop:
 :   cpx #12
     bcc next
     cpx #20
-    bcs eol
+    bcs next
     sta size-12,x
 
 next:
     inc index
     bra loop
 
-eol: 
+eol:
+    pla
+    
     ldx #1
     jsr CHKIN 
 
@@ -312,3 +318,5 @@ size:
 ; Global variables
 
 file_err: .res 1
+file_name: .res 256
+file_name_len: .res 1

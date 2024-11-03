@@ -223,6 +223,8 @@ step:
     bne :+
 
     lda #100
+    cmp progress_cur_pct
+    beq exit
     sta progress_cur_pct
     bra pr
 
@@ -254,21 +256,20 @@ step:
     sta progress_cur_next+2
 
 pr:
-    ; Delete two chars
-    lda #20
-    jsr CHROUT
-    jsr CHROUT
-
-    ; If progress > 10%, delete another char
+    ; Delete chars
+    ldx #2
     lda progress_cur_pct
     cmp #11
     bcc :+
-    lda #20
+    inx
+:   lda #20
     jsr CHROUT
-    lda progress_cur_pct
+    dex
+    bne :-
 
     ; Output progress value
-:   jsr util_print_num
+    lda progress_cur_pct
+    jsr util_print_num
     lda #'%'
     jsr CHROUT
 

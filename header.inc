@@ -33,9 +33,9 @@ HEADER_MAX_VER = 1
     jsr crc16_init
     
     ; Open package file
-    ldx #<header_fname
-    ldy #>header_fname
-    lda #header_fname_end-header_fname
+    ldx #<file_name
+    ldy #>file_name
+    lda file_name_len
     jsr file_open
     bcc :+
     rts
@@ -52,8 +52,10 @@ HEADER_MAX_VER = 1
     stz r4
     stz r4+1
     jsr file_read
+    bcc :+
+    jmp load_err
 
-    jsr file_get_size
+:   jsr file_get_size
     stx header_file_size
     sty header_file_size+1
     sta header_file_size+2
@@ -106,9 +108,11 @@ loop:
     stz r2+1
     stz r2+2
     jsr file_read
+    bcc :+
+    jmp load_err
 
     ; Check BLOB type
-    lda header_blob_id
+:   lda header_blob_id
     cmp #1
     beq set_rom
     cmp #2
@@ -197,11 +201,18 @@ crc:
     stz r2+1
     stz r2+2
     jsr file_read
+    bcs load_err
 
 exit:
     lda #<header_rom_ver
     lda #>header_rom_ver
     jmp file_close
+
+load_err:
+    jsr file_close
+    print 0, str1_header_load_err
+    sec
+    rts
 
 blobs:
     .res 2
@@ -260,10 +271,6 @@ magic:
 size:
     .res 3
 .endproc
-
-header_fname:
-    .byt "x16-r48.pkg"
-header_fname_end:
 
 header_buf:
     header_magic:       .res 6

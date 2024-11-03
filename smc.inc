@@ -61,12 +61,17 @@ SMC_STATUS_VERIFY_PASS = 9
     rts
     
 :   stz errors
-    stz issues
+
+    ; Init and select SMC progress meter
+    ldx header_smc_size
+    ldy header_smc_size+1
+    lda header_smc_size+2
+    jsr progress_smc_init
+    lda #2
+    jsr progress_select
 
     ; Print title
     print 0, str4_smc
-
-    jsr smc_load
 
 t1:
     ; Error: Unsupported or unknown firmware version (255.xx.xx or <43.0.0)
@@ -75,7 +80,7 @@ t1:
     beq :+
     cmp #SMC_MIN_VERSION
     bcs t2
-:   jsr add_error
+:   inc errors
     print 1, str4_smc_firmware_unsupported
 
 t2: 
@@ -83,7 +88,7 @@ t2:
     lda smc_bootloader
     cmp #$ff
     bne t3
-    jsr add_error
+    inc errors
     print 1, str4_smc_no_bootloader
     bra t4
 
@@ -94,7 +99,7 @@ t3:
     bcc :+
     cmp #SMC_BOOTLOADER_MAX+1
     bcc t4
-:   jsr add_error
+:   inc errors
     print 1, str4_smc_bootloader_unsupported
 
 t4: 
@@ -118,11 +123,11 @@ t4:
     jsr I2C_READ_BYTE
     lsr
     bcc t5
-    jsr add_error
+    inc errors
     print 1, str4_smc_write_protected
 
 t5: 
-    ; Warning: Bad bootloader (confirmed), CRC-16 = $7594; possible to check from SMC v 47.2.3
+    ; Warning: Bad bootloader (confirmed)
     lda smc_cur_version
     cmp #47
     bcc t6
@@ -136,14 +141,16 @@ t5:
     bcc t6
 
 :   jsr smc_get_bootloader_crc
-    cpx #$94
-    bne exit
-    cpy #$75
-    bne exit
-    
-    jsr add_warning
+    cmp #0  ; Known good bootloader
+    beq exit
+    cmp #1
+    bne :+
     print 1, str4_smc_bad_bootloader3
-    bra exit
+    bra t8
+:   cmp #2
+    bne t8
+    print 1, str4_smc_unknown_bootloader
+    bra t8
 
 t6: 
     ; Warning: Bad bootloader (high risk)
@@ -160,54 +167,39 @@ t6:
     cmp #0
     bne t7
 
-    jsr add_warning
     print 1,str4_smc_bad_bootloader2
-    bra exit
+    bra t8
 
 t7: 
     ; Warning: Bad bootloader (low risk)
-    jsr add_warning
     print 1,str4_smc_bad_bootloader1
+
+t8:
+    ; Try to load firmware
+    print 1,str4_smc_progress
+    jsr smc_load
+    bcs :+
+    print 1, str_ok
+    bra exit
+:   print 1, str_fail
+    inc errors
     
 exit:
-    ; Print PASS message if no issues
-    lda issues
-    bne :+
-    print 0, str_pass
-    lda #13
-    jsr CHROUT
-
-    ; Set status and return value
-:   clc
-    lda #SMC_STATUS_PRECHECK_PASS
-    sta smc_status
-
+    ; Check errors
     lda errors
     beq :+
 
+    ; Return with error
     sec
     lda #SMC_STATUS_PRECHECK_FAIL
     sta smc_status
-
-:   rts
-
-add_error:
-    lda errors
-    bne :+
-    print 0, str_fail
-    lda #13
-    jsr CHROUT
-:   inc errors
-    inc issues
     rts
 
-add_warning:
-    lda issues
-    bne :+
-    print 0, str_warn
-    lda #13
-    jsr CHROUT
-:   inc issues
+    ; Return without error
+:   print 1, str_pass
+    clc
+    lda #SMC_STATUS_PRECHECK_PASS
+    sta smc_status
     rts
 
 errors: .res 1
@@ -230,10 +222,14 @@ issues: .res 1
     lda header_smc_start+2
     sta r1+2
     stz r1+3
-    ldx #<header_fname
-    ldy #>header_fname
-    lda #header_fname_end-header_fname
+    ldx #<file_name
+    ldy #>file_name
+    lda file_name_len
     jsr file_open_and_seek
+    bcs err
+
+    ; Reset CRC
+    jsr crc16_init
 
     ; Read firmware from file
     lda #$00
@@ -246,14 +242,45 @@ issues: .res 1
     sta r2+1
     lda header_smc_size+2
     sta r2+2
-    stz r4
-    stz r4+1
+    lda #<progress
+    sta r4
+    lda #>progress
+    sta r4+1
     jsr file_read
+    bcs err
 
     ; Close file
     jsr file_close
 
+    ; Compare CRCs
+    lda crc16_val
+    cmp header_smc_crc
+    bne err
+    lda crc16_val+1
+    cmp header_smc_crc+1
+    bne err
+
+    ; Return without errors
+    clc
     rts
+
+    ; CRC mismatch
+err:
+    jsr file_close
+    sec
+    rts
+
+progress:
+    sec
+    lda header_smc_size
+    sbc r2
+    tax
+    lda header_smc_size+1
+    sbc r2+1
+    tay
+    lda header_smc_size+2
+    sbc r2+2
+    jmp progress_update
 .endproc
 
 ;******************************************************************************
@@ -330,6 +357,10 @@ temp: .res 1
 ; Purpose.............: Calculates CRC-16 of the bootloader
 ; Input...............: Nothing
 ; Returns.............: X/Y = CRC-16 (LSB/MSB)
+;                       A = 0: Known good bootloader
+;                           1: Known bad bootloader
+;                           2: Unknown bootloader
+;                           3: No bootloader
 .proc smc_get_bootloader_crc
     ; Clear CRC value
     jsr crc16_init
@@ -360,12 +391,62 @@ loop:
     ora counter+1
     bne loop
 
+    ; Compare against list of known CRCs
+    ldx #0
+loop2:
+    lda known_good,x
+    cmp crc16_val
+    bne next
+    lda known_good+1,x
+    cmp crc16_val+1
+    beq match
+next:
+    inx
+    inx
+    cpx #known_bad_end-known_good
+    bcc loop2
+
+unknown:
+    ; Check if no bootloader, CRC=$6995
+    lda #$95
+    cmp crc16_val
+    bne :+
+    lda #$69
+    cmp crc16_val+1
+    bne :+
+    lda #3
+    bra exit
+
+:   ; Otherwise it's an unknown bootloader
+    lda #2
+    bra exit
+
+match:
+    cpx #known_bad-known_good
+    bcs bad
+
+good:
+    lda #0
+    bra exit
+
+bad:
+    lda #1
+
+exit:
     ; Set return values
     ldx crc16_val
     ldy crc16_val+1
 
     rts
 counter: .res 2
+
+known_good:
+    .word $19B5 ;v1
+    .word $15C7 ;v2
+    .word $BF63 ;v3
+known_bad:
+    .word $7594 ;v2 (bad)
+known_bad_end:
 .endproc
 
 ;******************************************************************************

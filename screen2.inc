@@ -135,15 +135,15 @@ loop:
     cpx #0
     beq exit
 
-    ; Install button?
+    ; Custom button?
     cpx #1
     beq custom
 
-    ; Advanced button?
+    ; Next button?
     cpx #2
     bne loop
 
-install:
+next:
     jmp screen4_show
 
 custom:

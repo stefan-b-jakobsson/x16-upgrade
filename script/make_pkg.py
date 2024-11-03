@@ -163,18 +163,15 @@ header.append(smc_size & 255)               # SMC version
 header.append((smc_size >> 8) & 255)
 header.append((smc_size >> 16) & 255)
 
-header.append(smc_crc & 255)
+header.append((smc_crc & 255))
 header.append((smc_crc >> 8) & 255)
 
 header += bytes(7)                          # Reserved
 
 # Header CRC
 crc_header = 0xffff                         # Offset 0x: Header CRC-16
-i = 0
 for b in header:
     crc_header = crc16(crc_header, b)
-    print (str(i) + ":" + str(crc_header))
-    i=i+1
 header.append(crc_header & 255)
 header.append(crc_header >> 8)
 

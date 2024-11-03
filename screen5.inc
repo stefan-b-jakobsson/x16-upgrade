@@ -13,6 +13,18 @@
 
     ; Install new ROM
     jsr rom_update
-    rts
+    jsr rom_verify
+    
+    ; Cold start
+    print 0, rstmsg
+    ldx #0
+    ldy #0
+    lda #5
+    jsr util_countdown
+    sec
+    jmp $ff47 
+
+rstmsg:
+    .byt 13, "Reset... ", 0
 .endproc
 
