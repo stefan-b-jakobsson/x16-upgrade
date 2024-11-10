@@ -28,7 +28,7 @@
     ldy #WIDGET_STATE_SELECTED
     jsr widget_set_state
 
-    ; Add Install button, if no failed pre-checks (index 1)
+    ; Add Next button, if no failed pre-checks (index 1)
     lda rom_status
     cmp #ROM_STATUS_PRECHECK_FAIL
     beq listen
@@ -39,9 +39,9 @@
     cmp #SMC_STATUS_PRECHECK_FAIL
     beq listen
 
-    ldx #<str4_btn_install
-    ldy #>str4_btn_install
-    lda #str4_btn_install_end-str4_btn_install
+    ldx #<str4_btn_next
+    ldy #>str4_btn_next
+    lda #str4_btn_next_end-str4_btn_next
     jsr widget_add_button
     
 listen:
@@ -52,9 +52,9 @@ listen:
     bne :+
     jmp screen2_show
 
-    ; Install button?
+    ; Next button?
 :   cpx #1
     bne listen
     
-    jmp screen5_show
+    jmp screen6_show
 .endproc

@@ -650,6 +650,32 @@ loop:
     counter: .res 3
 .endproc
 
+;******************************************************************************
+; Function name.......: util_wait_keypress
+; Purpose.............: Waits for keypress; reads keycodes directly over I2C
+; Input...............: Nothing
+; Returns.............: Nothing
+.proc util_wait_keypress
+    ; Read keycodes until buffer is empty
+    ldx #SMC_ADDR
+    ldy #SMC_GET_KEY
+:   jsr I2C_READ_BYTE
+    cmp #0
+    bne :-
+
+    ; Wait for key down event
+    ldx #SMC_ADDR
+    ldy #SMC_GET_KEY
+:   jsr I2C_READ_BYTE
+    cmp #0
+    bmi :-              ; Ignore key up
+    beq :-
+
+    ; Return
+    rts
+.endproc
+
+
 screen_height: .res 1
 screen_width: .res 1
 

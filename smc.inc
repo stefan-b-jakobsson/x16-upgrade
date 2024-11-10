@@ -1,10 +1,12 @@
 SMC_ADDR = $42
 
+SMC_GET_KEY = $07
 SMC_EFUSE = $0c
 SMC_VER_MAJOR = $30
 SMC_VER_MINOR = $31
 SMC_VER_PATCH = $32
 SMC_BOOTLOADER_VER = $8e
+SMC_BOOTLOADER_START = $8f
 SMC_SET_PAGE = $90
 SMC_READ_FLASH = $91
 
@@ -41,6 +43,10 @@ SMC_STATUS_VERIFY_PASS = 9
     sty smc_cur_version+1
     stx smc_cur_version+2
 
+    sta $9000
+    sty $9001
+    stx $9002
+
     ; Get SMC bootloader version
     jsr smc_get_bootloader_version
     sta smc_bootloader
@@ -52,18 +58,14 @@ SMC_STATUS_VERIFY_PASS = 9
 ; Purpose.............: Runs SMC pre-upgrade checks
 ; Input...............: Nothing
 ; Returns.............: C=1 on error
-;                       smc_status = SMC_STATUS_PRECHECK_PASS /
-;                                    SMC_STATUS_PRECHECK_FAIL
 .proc smc_run_prechecks
     ; Abort if not selected for update
     lda smc_status
     bne :+
     rts
-    
-:   stz errors
 
     ; Init and select SMC progress meter
-    ldx header_smc_size
+:   ldx header_smc_size
     ldy header_smc_size+1
     lda header_smc_size+2
     jsr progress_smc_init
@@ -74,60 +76,78 @@ SMC_STATUS_VERIFY_PASS = 9
     print 0, str4_smc
 
 t1:
-    ; Error: Unsupported or unknown firmware version (255.xx.xx or <43.0.0)
+    ; Error: Unsupported firmware version (<43.0.0)
+    print 1, str4_smc_firmware
     lda smc_cur_version
-    cmp #$ff
-    beq :+
     cmp #SMC_MIN_VERSION
-    bcs t2
-:   inc errors
-    print 1, str4_smc_firmware_unsupported
-
-t2: 
-    ; Error: No bootloader
-    lda smc_bootloader
-    cmp #$ff
-    bne t3
-    inc errors
-    print 1, str4_smc_no_bootloader
-    bra t4
-
-t3:
-    ; Error: Unsupported bootloader
-    lda smc_bootloader
-    cmp #SMC_BOOTLOADER_MIN
     bcc :+
-    cmp #SMC_BOOTLOADER_MAX+1
-    bcc t4
-:   inc errors
-    print 1, str4_smc_bootloader_unsupported
 
-t4: 
-    ; Error: Chip write-protected, possible to check from SMC v 47.2.4
+    ; Test 1, OK
+    print 1, str_ok_cr
+    bra t2
+
+:   ; Test 1, fail
+    print 1, str_fail_cr
+    print 2, str4_smc_firmware_unsupported
+    jmp fail
+
+t2:
+    ; Error: Write-enabled, possible to check from SMC v 47.2.4
     lda smc_cur_version
-    cmp #$ff
-    beq t5
     cmp #47
-    bcc t5
+    bcc t3
     bne :+
     lda smc_cur_version+1
     cmp #2
-    bcc t5
+    bcc t3
     bne :+
     lda smc_cur_version+2
     cmp #4
-    bcc t5
+    bcc t3
 
 :   ldx #SMC_ADDR
     ldy #SMC_EFUSE
     jsr I2C_READ_BYTE
     lsr
+    bcs :+
+
+    ; Test 2, OK
+    print 1, str4_smc_write_enabled
+    print 1, str_ok_cr
+    bra t3
+
+    ; Test 2, fail
+:   print 1, str4_smc_write_enabled
+    print 1, str_fail_cr
+    jmp fail
+
+t3: 
+    ; Error: No bootloader
+    print 1, str4_smc_bootloader
+
+    lda smc_bootloader
+    bne t4
+    
+    ; Test 3, fail
+    print 1, str_fail_cr
+    print 2, str4_smc_no_bootloader
+    jmp fail
+
+t4:
+    ; Error: Unsupported bootloader
+    lda smc_bootloader
+    cmp #SMC_BOOTLOADER_MIN
+    bcc :+
+    cmp #SMC_BOOTLOADER_MAX+1
     bcc t5
-    inc errors
-    print 1, str4_smc_write_protected
+
+    ; Test 4, fail
+    print 1, str_fail_cr
+    print 2, str4_smc_bootloader_unsupported
+    jmp fail
 
 t5: 
-    ; Warning: Bad bootloader (confirmed)
+    ; Warning: Bad bootloader (confirmed), possible to check from firmware version 47.2.3
     lda smc_cur_version
     cmp #47
     bcc t6
@@ -142,68 +162,303 @@ t5:
 
 :   jsr smc_get_bootloader_crc
     cmp #0  ; Known good bootloader
-    beq exit
-    cmp #1
     bne :+
-    print 1, str4_smc_bad_bootloader3
-    bra t8
-:   cmp #2
-    bne t8
-    print 1, str4_smc_unknown_bootloader
-    bra t8
+    print 1, str_ok_cr
+    bra t7
+
+:   cmp #1  ; Known bad bootloader
+    bne :+
+    print 1, str_warn_cr
+    print 2, str4_smc_bad_bootloader3
+    bra t7
+
+:   cmp #2  ; Unknown bootloader
+    bne t7
+    print 1, str_warn_cr
+    print 2, str4_smc_unknown_bootloader
+    bra t7
 
 t6: 
-    ; Warning: Bad bootloader (high risk)
+    ; Warning: Bad bootloader (high risk), bootloader v2 + firmware 45.1.0
     lda smc_bootloader
     cmp #2
-    bne exit
-    lda smc_cur_version
+    beq :+
+    print 1, str_ok_cr
+    bra t7
+
+:   lda smc_cur_version
     cmp #45
-    bne t7
+    bne :+
     lda smc_cur_version+1
     cmp #1
-    bne t7
+    bne :+
     lda smc_cur_version+2
     cmp #0
-    bne t7
+    bne :+
 
-    print 1,str4_smc_bad_bootloader2
-    bra t8
+    ; High risk
+    print 1, str_warn_cr
+    print 2, str4_smc_bad_bootloader2
+    bra t7
+ 
+    ; Low risk
+    print 1, str_warn_cr
+:   print 2,str4_smc_bad_bootloader1
 
-t7: 
-    ; Warning: Bad bootloader (low risk)
-    print 1,str4_smc_bad_bootloader1
-
-t8:
+t7:
     ; Try to load firmware
-    print 1,str4_smc_progress
+    print 1, str4_smc_loading
     jsr smc_load
-    bcs :+
-    print 1, str_ok
-    bra exit
-:   print 1, str_fail
-    inc errors
+    bcc :+
+
+    print 1, str_fail_cr
+    bra fail
+
+:   print 1, str_ok_cr
     
 exit:
-    ; Check errors
-    lda errors
-    beq :+
+    ; Return without error
+    clc
+    lda #SMC_STATUS_LOAD_PASS
+    sta smc_status
+    rts
 
-    ; Return with error
+fail:
     sec
     lda #SMC_STATUS_PRECHECK_FAIL
     sta smc_status
     rts
+.endproc
 
-    ; Return without error
-:   print 1, str_pass
-    clc
-    lda #SMC_STATUS_PRECHECK_PASS
-    sta smc_status
+;******************************************************************************
+; Function name.......: smc_update
+; Purpose.............: Updates the SMC firmware
+; Input...............: Nothing
+; Returns.............: C=1 on error
+.proc smc_update
+    ; Disable interrupts
+    sei
+
+    ; Return if status != LOAD_PASS
+    lda smc_status
+    cmp #SMC_STATUS_LOAD_PASS
+    beq :+
+    sec
     rts
 
-errors: .res 1
-issues: .res 1
+:   ; Print header
+    print 0, str5_smc_header
+
+wait_key:
+    print 1, str5_smc_wait_key
+    jsr util_wait_keypress
+
+    ; Start bootloader
+    print 1, str5_smc_start_bootloader
+    ldx #SMC_ADDR
+    ldy #SMC_BOOTLOADER_START
+    lda #$31
+    jsr I2C_WRITE_BYTE
+
+    ; Wait max 20 seconds
+    lda #20
+    ldx #<callback
+    ldy #>callback
+    jsr util_countdown
+
+    ; Check if bootloader was started, or go again
+    ldx #SMC_ADDR
+    ldy #SMC_BOOTLOADER_VER
+    jsr I2C_READ_BYTE
+    cmp #0
+    bne wait_key
+
+    ; Clear byte count
+    stz count
+    stz count+1
+
+    ; Clear checksum
+    stz checksum
+
+    ; Set max attempts
+    lda #10
+    sta attempts
+
+    ; Setup pointer to end of firmware, $5f00 + header_smc_size
+    lda header_smc_size
+    sta smc_src_addr
+    lda header_smc_size+1
+    adc #$5f
+    sta smc_src_addr+1
+
+    ; Pad end of firmware to page boundary
+    lda header_smc_size
+    eor #$ff
+    and #$3f
+    inc
+    tay
+
+    clc
+    adc header_smc_size
+    sta size
+    lda header_smc_size+1
+    adc #0
+    sta size+1
+
+    lda #$ff
+:   dey
+    cpy #$ff
+    beq :+
+    sta (smc_src_addr),y
+    bra :-
+
+    ; Setup pointer to start of firmware, $5f00
+:   stz smc_src_addr
+    lda #$5f
+    sta smc_src_addr+1
+
+    ; Setup progress meter
+    lda #2
+    jsr progress_select
+
+    ; Print write message
+    print 1, str5_smc_write
+
+loop:
+    ; End of stream?
+    lda count
+    cmp size
+    bne send
+    lda count+1
+    cmp size+1
+    beq complete
+
+send:
+    ; Send byte
+    ldx #SMC_ADDR
+    ldy #$80
+    lda (smc_src_addr)
+    jsr I2C_WRITE_BYTE
+
+    ; Update checksum
+    clc
+    lda checksum
+    adc (smc_src_addr)
+    sta checksum
+
+commit:
+    ; Check if at end of package
+    lda count
+    and #7
+    cmp #7
+    bne next
+
+    ; Send checksum
+    ldx #SMC_ADDR
+    ldy #$80
+    lda checksum
+    eor #$ff
+    inc
+    jsr I2C_WRITE_BYTE
+
+    ; Clear checksum
+    stz checksum
+
+    ; Commit
+    ldx #SMC_ADDR
+    ldy #$81
+    jsr I2C_READ_BYTE
+    cmp #1
+    beq next
+
+    ; Commit failed
+    dec attempts
+    beq fail
+    
+    ; Rewind source address to start of packet
+    sec
+    lda count
+    sbc #7
+    sta count
+    lda count+1
+    sbc #0
+    sta count+1
+    bra loop
+
+next:
+    ; Reset attempts
+    lda #10
+    sta attempts
+
+    ; Increment byte count
+    inc count
+    bne :+
+    inc count+1
+
+:   ; Increment source address
+    inc smc_src_addr
+    bne loop
+    inc smc_src_addr+1
+    
+    ; Update progress meter
+    ldx count
+    ldy count+1
+    lda #0
+    jsr progress_update
+    
+    jmp loop
+
+complete:
+    ; Update progress meter
+    ldx count
+    ldy count+1
+    lda #0
+    jsr progress_update
+
+    ; Print OK
+    print 1, str_ok_cr
+
+    ; Reset
+    print 1, str5_smc_reset
+    lda #5
+    ldx #0
+    ldy #0
+    jsr util_countdown
+
+    ldx #SMC_ADDR
+    ldy #$82
+    jsr I2C_WRITE_BYTE
+
+:   bra :-
+
+fail:
+    pha
+    print 1, str5_smc_update_failed
+    pla
+    jsr util_print_num
+    lda #13
+    jsr CHROUT
+    sec
+    rts
+
+callback:
+    ldx #SMC_ADDR
+    ldy #SMC_BOOTLOADER_VER
+    jsr I2C_READ_BYTE
+    cmp #0
+    bne :+
+    print 1, str_ok_cr
+    stz util_countdown::counter
+:   rts
+
+count:
+    .res 2
+size:
+    .res 2
+checksum:
+    .res 1
+attempts:
+    .res 1
 .endproc
 
 ;******************************************************************************
@@ -285,14 +540,15 @@ progress:
 
 ;******************************************************************************
 ; Function name.......: smc_get_firmware_version
-; Purpose.............: Returns firmware version
+; Purpose.............: Returns current firmware version, or 0.0.0 if 
+;                       firmware version not available
 ; Input...............: Nothing
 ; Returns.............: Firmware version
 ;                       A = major
 ;                       Y = minor
 ;                       X = patch
 .proc smc_get_firmware_version
-    lda #SMC_ADDR
+    ldx #SMC_ADDR
     ldy #SMC_VER_MAJOR
 
 :   jsr I2C_READ_BYTE
@@ -301,16 +557,23 @@ progress:
     cpy #SMC_VER_PATCH+1
     bcc :-
 
-    pla
-    ply
     plx
+    ply
+    pla
 
-    rts
+    cmp #$ff
+    bne :+
+
+    lda #0
+    ldx #0
+    lda #0
+
+:   rts
 .endproc
 
 ;******************************************************************************
 ; Function name.......: smc_get_bootloader
-; Purpose.............: Returns bootloader version
+; Purpose.............: Returns bootloader version or 0 if not found
 ; Input...............: Nothing
 ; Returns.............: A = Bootloader version
 .proc smc_get_bootloader_version
@@ -346,7 +609,7 @@ progress:
     rts
 
 not_found:
-    lda #$ff
+    lda #0
     rts
 
 temp: .res 1
@@ -462,7 +725,6 @@ smc_cur_version:
 smc_bootloader:
     .res 1
 
-smc_new_version:
-    .byt 47,2,4
-
-
+.ZEROPAGE
+    smc_src_addr: .res 2
+.CODE

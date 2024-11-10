@@ -14,6 +14,9 @@
     ; Install new ROM
     jsr rom_update
     jsr rom_verify
+
+    ; Install SMC
+    jsr smc_update
     
     ; Cold start
     print 0, rstmsg

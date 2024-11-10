@@ -2,7 +2,13 @@ ROM_STATUS_UNSELECTED = 0
 ROM_STATUS_SELECTED = 1
 ROM_STATUS_PRECHECK_FAIL = 2
 ROM_STATUS_PRECHECK_PASS = 3
-ROM_STATUS_INSTALLED = 4
+ROM_STATUS_LOAD_FAIL = 4
+ROM_STATUS_LOAD_PASS = 5
+ROM_STATUS_UPDATE_FAIL = 6
+ROM_STATUS_UPDATE_PASS = 7
+ROM_STATUS_VERIFY_FAIL = 8
+ROM_STATUS_VERIFY_PASS = 9
+
 
 ROM_CHIP_ID = $b7bf
 
@@ -95,7 +101,7 @@ t3:
 
 pass:
     ; Set status
-    lda #ROM_STATUS_PRECHECK_PASS
+    lda #ROM_STATUS_LOAD_PASS
     sta rom_status
 
 exit:
@@ -120,35 +126,48 @@ fail:
 ; Purpose.............: Updates the ROM
 ; Input...............: Nothing
 ; Returns.............: Nothing
+; Errors..............: C=1 on ROM write error
 .proc rom_update
     ; Abort if status != PRECHECK_PASS
     lda rom_status
+    cmp #ROM_STATUS_LOAD_PASS
+    beq :+
     cmp #ROM_STATUS_PRECHECK_PASS
     beq :+
+    sec
     rts
+
+    ; Print header
+:   print 0, str5_rom_header
+
+    ; Load ROM from file
+    lda rom_status
+    cmp #ROM_STATUS_LOAD_PASS
+    beq :+
+    jsr rom_load
 
     ; Disable interrupts
 :   sei
 
-    ; Print header
-    print 0, str5_rom_header
-
     ; Setup
-    stz rom_src_addr
+    stz rom_src_addr        ; RAM address where new ROM image is stored
     lda #$7f
     sta rom_src_addr+1
 
-    stz rom_target_bank
+    stz rom_target_bank     ; ROM address start
     stz rom_target_addr
     lda #$c0
     sta rom_target_addr+1
 
-    stz count
+    stz count               ; Byte count
     stz count+1
     stz count+2
 
-    lda #0
+    lda #0                  ; Select progress meter
     jsr progress_select
+
+    lda #10                 ; Set max write errors
+    sta attempts
 
     ; Chip erase
     print 1, str5_rom_erase
@@ -163,9 +182,18 @@ fail:
 loop:
     lda (rom_src_addr)
     jsr rom_write
+    bcc :+
+    dec attempts
+    bne loop
+    
+    ; Return with error, write errors
+    lda #ROM_STATUS_UPDATE_FAIL
+    sta rom_status
+    sec
+    rts
 
     ; Increment byte count
-    inc count
+:   inc count
     bne :++
     inc count+1
     bne :+
@@ -219,11 +247,15 @@ exit:
     lda #13
     jsr CHROUT
 
-    ; Exit
+    lda #ROM_STATUS_UPDATE_PASS
+    sta rom_status
+
     stz ROM_SEL
+    clc
     rts
 
 count: .res 3
+attempts: .res 1
 .endproc
 
 ;******************************************************************************
@@ -234,7 +266,7 @@ count: .res 3
 .proc rom_verify
     ; Abort if status != PRECHECK_PASS
     lda rom_status
-    cmp #ROM_STATUS_PRECHECK_PASS
+    cmp #ROM_STATUS_UPDATE_PASS
     beq :+
     sec
     rts
@@ -316,9 +348,15 @@ next:
 
 ok:
     stz ROM_SEL
+   
     print 1,str_ok
     lda #13
     jsr CHROUT
+   
+    lda #ROM_STATUS_VERIFY_PASS
+    sta rom_status
+    
+    clc
     rts
 
 fail:    
@@ -326,6 +364,11 @@ fail:
     print 1, str_fail
     lda #13
     jsr CHROUT
+
+    lda #ROM_STATUS_VERIFY_FAIL
+    sta rom_status
+    
+    sec
     rts
 
 count: .res 3
@@ -349,7 +392,7 @@ count: .res 3
     lda #0
     jsr progress_select
 
-    print 1, str4_smc_progress
+    print 1, str4_rom_progress
 
     ; Open file and seek start of ROM firmware
     lda header_rom_start

@@ -122,6 +122,9 @@ str4_rom_write_enabled:
 str4_rom_chip_id:
     .byt "Chip ID...", 0
 
+str4_rom_progress:
+    .byt "Loading... 0%", 0
+
 str4_vera:
     .byt "VERA", 13, 0
 
@@ -131,49 +134,52 @@ str4_vera_nys:
 str4_smc:
     .byt "SMC", 13, 0
 
+str4_smc_firmware:
+    .byt "Firmware...", 0
+
 str4_smc_firmware_unsupported:
-    .byt "ERR:Unsupported firmware", 13, 0
+    .byt "Unsupported version", 13, 0
+
+str4_smc_write_enabled:
+    .byt "Write-enabled...", 0
+
+str4_smc_bootloader:
+    .byt "Bootloader...",0
 
 str4_smc_no_bootloader:
-    .byt "ERR:No bootloader", 13,0
+    .byt "No bootloader", 13,0
 
 str4_smc_bootloader_unsupported:
-    .byt "ERR:Unsupported bootloader", 13, 0
-
-str4_smc_write_protected:
-    .byt "ERR:Write-protected", 13,0
-
-str4_smc_progress:
-    .byt "Load... 0%",0
-
-str4_smc_file_load_error:
-    .byt 13, "ERR:File error", 13, 0
+    .byt "Unsupported version", 13, 0
 
 str4_smc_bad_bootloader1:
-    .byt "WRN:Bad bootloader (low risk)",13,0
+    .byt "Bad v2, low risk",13,0
 
 str4_smc_bad_bootloader2:
-    .byt "WRN:Bad bootloader (high risk)",13, 0
+    .byt "Bad v2, high risk",13, 0
 
 str4_smc_bad_bootloader3:
-    .byt "WRN:Bad bootloader (confirmed)",13, 0
+    .byt "Bad v2, confirmed",13, 0
 
 str4_smc_unknown_bootloader:
-    .byt "WRN:Unknown bootloader", 13, 0
+    .byt "Unknown version", 13, 0
+
+str4_smc_loading:
+    .byt "Loading 0%",0
 
 str4_btn_back:
     .byt "<Back>"
 str4_btn_back_end:
 
-str4_btn_install:
-    .byt "<Install>"
-str4_btn_install_end:
+str4_btn_next:
+    .byt "<Next>"
+str4_btn_next_end:
 
 
 ; Screen5: Install
 
 str5_header:
-    .byt "Installing upgrade", 13, 13, 0
+    .byt "INSTALLING UPGRADES", 13, 13, 0
 
 str5_rom_header:
     .byt "ROM",13, 0
@@ -186,5 +192,46 @@ str5_rom_write:
 
 str5_rom_verify:
     .byt "Verifying 0%", 0
+
+str5_smc_header:
+    .byt "SMC",13,0
+
+str5_smc_wait_key:
+    .byt "Press any key...",13,0
+
+str5_smc_start_bootloader:
+    .byt "Press Power+Reset at the same time ", 0
+
+str5_smc_write:
+    .byt "Writing 0%", 0
+
+str5_smc_verify:
+    .byt "Verifying 0%", 0
+
+str5_smc_update_failed:
+    .byt "Update failed. Last err no: ", 0
+
+str5_smc_reset:
+    .byt "System reset...", 0
+
+
+; Screen 6: Warning
+
+str6_disclaimer:
+    .byt "DISCLAIMER", 13, 13
+    .byt "Interrupting or failing to complete the upgrade may render your X16 computer inoperable, "
+    .byt "requiring external programming tools to recover it. The developers of this software are not liable " 
+    .byt "for any damage that may result from its use.", 13, 13
+    .byt "For additional information, please refer to the enclosed README file.", 13, 13
+    .byt "Press <Exit> to quit the program or <Install> to begin the upgrade.", 13, 13, 0
+
+str6_btn_exit:
+    .byt "<Exit>"
+str6_btn_exit_end:
+
+str6_btn_install:
+    .byt "<Install>"
+str6_btn_install_end:
+
 
 

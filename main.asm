@@ -51,6 +51,8 @@
     rts
 .endproc
 
+.include "util.inc"
+
 .include "header.inc"
 .include "rom.inc"
 .include "vera.inc"
@@ -61,8 +63,8 @@
 .include "screen3.inc"
 .include "screen4.inc"
 .include "screen5.inc"
+.include "screen6.inc"
 
-.include "util.inc"
 .include "crc16.inc"
 .include "progress.inc"
 .include "widget.inc"
