@@ -1,3 +1,21 @@
+; Supported SMC firmware and bootloader versions
+SMC_MIN_VERSION = 43
+SMC_BOOTLOADER_MIN = 1
+SMC_BOOTLOADER_MAX = 3
+
+; Status
+SMC_STATUS_UNSELECTED = 0
+SMC_STATUS_SELECTED = 1
+SMC_STATUS_PRECHECK_FAIL = 2
+SMC_STATUS_PRECHECK_PASS = 3
+SMC_STATUS_LOAD_FAIL = 4
+SMC_STATUS_LOAD_PASS = 5
+SMC_STATUS_UPDATE_FAIL = 6
+SMC_STATUS_UPDATE_PASS = 7
+SMC_STATUS_VERIFY_FAIL = 8
+SMC_STATUS_VERIFY_PASS = 9
+
+; I2C interface
 SMC_ADDR = $42
 
 SMC_GET_KEY = $07
@@ -10,20 +28,12 @@ SMC_BOOTLOADER_START = $8f
 SMC_SET_PAGE = $90
 SMC_READ_FLASH = $91
 
-SMC_MIN_VERSION = 43
-SMC_BOOTLOADER_MIN = 1
-SMC_BOOTLOADER_MAX = 3
-
-SMC_STATUS_UNSELECTED = 0
-SMC_STATUS_SELECTED = 1
-SMC_STATUS_PRECHECK_FAIL = 2
-SMC_STATUS_PRECHECK_PASS = 3
-SMC_STATUS_LOAD_FAIL = 4
-SMC_STATUS_LOAD_PASS = 5
-SMC_STATUS_UPDATE_FAIL = 6
-SMC_STATUS_UPDATE_PASS = 7
-SMC_STATUS_VERIFY_FAIL = 8
-SMC_STATUS_VERIFY_PASS = 9
+SMC_BOOTLOADER_TRANSMIT = $80
+SMC_BOOTLOADER_COMMIT = $81
+SMC_BOOTLOADER_REBOOT = $82
+SMC_BOOTLADER_GET_VER = $83
+SMC_BOOTLOADER_REWIND = $84
+SMC_BOOTLOADER_READ_FLASH = $85
 
 ;******************************************************************************
 ; Function name.......: smc_init
@@ -42,10 +52,6 @@ SMC_STATUS_VERIFY_PASS = 9
     sta smc_cur_version
     sty smc_cur_version+1
     stx smc_cur_version+2
-
-    sta $9000
-    sty $9001
-    stx $9002
 
     ; Get SMC bootloader version
     jsr smc_get_bootloader_version
@@ -418,18 +424,11 @@ complete:
     ; Print OK
     print 1, str_ok_cr
 
-    ; Reset
-    print 1, str5_smc_reset
-    lda #5
-    ldx #0
-    ldy #0
-    jsr util_countdown
-
-    ldx #SMC_ADDR
-    ldy #$82
-    jsr I2C_WRITE_BYTE
-
-:   bra :-
+    ; Set status
+    lda #SMC_STATUS_UPDATE_PASS
+    sta smc_status
+    clc
+    rts
 
 fail:
     pha
@@ -438,6 +437,8 @@ fail:
     jsr util_print_num
     lda #13
     jsr CHROUT
+    lda #SMC_STATUS_UPDATE_FAIL
+    sta smc_status
     sec
     rts
 
@@ -459,6 +460,185 @@ checksum:
     .res 1
 attempts:
     .res 1
+.endproc
+
+;******************************************************************************
+; Function name.......: smc_verify
+; Purpose.............: Verifies SMC update
+; Input...............: Nothing
+; Returns.............: Nothing
+; Error...............: C=1 if verify failed
+.proc smc_verify
+    ; Check bootloader version, verify available from v3
+    lda smc_bootloader
+    cmp #$ff
+    bne :+
+    clc
+    rts
+
+:   cmp #3
+    bcs :+
+    clc
+    rts
+
+:   ; Print verifying message
+    print 1, str5_smc_verify
+
+    ; Setup progress meter
+    lda #2
+    jsr progress_select
+
+    ; Clear counter
+    stz count
+    stz count+1
+
+    ; Set pointer to start of new SMC firmware in RAM
+    lda #$00
+    sta smc_src_addr
+    lda #$5f
+    sta smc_src_addr+1
+
+    ; Rewind target address
+    ldx #SMC_ADDR
+    ldy #SMC_BOOTLOADER_REWIND
+    lda #0
+    jsr I2C_WRITE_BYTE
+
+loop:
+    ; Read byte from SMC flash
+    ldx #SMC_ADDR
+    ldy #SMC_BOOTLOADER_READ_FLASH
+    jsr I2C_READ_BYTE
+
+    ldx count+1
+    bne compare
+    ldx count
+
+    ; Byte $0000? Should always be $ff
+    bne :+
+    cmp #$ff
+    bne failed
+    bra next
+
+    ; Byte $0001? Should always be $ce
+:   cpx #1
+    bne :+
+    cmp #$ce
+    bne failed
+    bra next
+
+    ; Byte $0012? Should be Reset vector minus 9, low byte
+:   cpx #$12
+    bne :+
+    tay
+
+    sec
+    lda $5f00
+    sbc #9
+    sta ee_rdy
+    lda $5f01
+    sbc #0
+    and #%11001111
+    ora #%11000000
+    sta ee_rdy+1
+
+    cpy ee_rdy
+    bne failed
+    bra next
+
+    ; Byte $0013? Should be Reset vector minus 9, high byte
+:   cpx #$13
+    bne compare
+    cmp ee_rdy+1
+    bne failed
+    bra next
+
+compare:
+    ; Compare against RAM buffer
+    cmp (smc_src_addr)
+    bne failed
+
+    ; Next byte
+next:
+    inc smc_src_addr
+    bne :+
+    inc smc_src_addr+1
+
+:   ; Increment counter
+    inc count
+    bne done
+    inc count+1
+    jsr progress
+
+done:
+    lda count
+    cmp header_smc_size
+    bne loop
+    lda count+1
+    cmp header_smc_size+1
+    beq exit
+    jmp loop
+
+exit:
+    jsr progress
+    
+    lda #SMC_STATUS_VERIFY_PASS
+    sta smc_status
+    print 1, str_ok_cr
+    clc
+    rts
+
+failed:
+    jsr util_print_num
+    lda #32
+    jsr CHROUT
+    lda (smc_src_addr)
+    jsr util_print_num
+    lda #32
+    jsr CHROUT
+    lda count
+    jsr util_print_num
+    lda #32
+    jsr CHROUT
+    lda count+1
+    jsr util_print_num
+
+    lda #SMC_STATUS_VERIFY_FAIL
+    sta smc_status
+    print 1, str_fail_cr
+    sec
+    rts
+
+progress:
+    ldx count
+    ldy count+1
+    lda #0
+    jmp progress_update
+
+count: .res 2
+ee_rdy: .res 2
+.endproc
+
+.proc smc_reboot
+    ; Check if SMC was selected for update, return if not
+    lda smc_status
+    cmp #SMC_STATUS_UNSELECTED
+    bne :+
+    rts
+
+:   ; Wait 5 seconds
+    print 1, str5_smc_reset
+    lda #5
+    ldx #0
+    ldy #0  
+    jsr util_countdown
+
+    ; Send reboot command to bootloader
+    ldx #SMC_ADDR
+    ldy #SMC_BOOTLOADER_REBOOT
+    jsr I2C_WRITE_BYTE
+
+:   bra :-
 .endproc
 
 ;******************************************************************************
