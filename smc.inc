@@ -1,9 +1,29 @@
-; Supported SMC firmware and bootloader versions
-SMC_MIN_VERSION = 43
-SMC_BOOTLOADER_MIN = 1
-SMC_BOOTLOADER_MAX = 3
+; Copyright (c) 2024, Stefan Jakobsson
 
-; Status
+; Redistribution and use in source and binary forms, with or without 
+; modification, are permitted provided that the following conditions are met:
+
+; (1) Redistributions of source code must retain the above copyright notice, 
+;     this list of conditions and the following disclaimer. 
+;
+; (2) Redistributions in binary form must reproduce the above copyright notice,
+;     this list of conditions and the following disclaimer in the documentation
+;     and/or other materials provided with the distribution.
+
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+; ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+; LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+; CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+; SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+; INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+; CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+; POSSIBILITY OF SUCH DAMAGE.
+
+
+; SMC update status values
 SMC_STATUS_UNSELECTED = 0
 SMC_STATUS_SELECTED = 1
 SMC_STATUS_PRECHECK_FAIL = 2
@@ -15,7 +35,12 @@ SMC_STATUS_UPDATE_PASS = 7
 SMC_STATUS_VERIFY_FAIL = 8
 SMC_STATUS_VERIFY_PASS = 9
 
-; I2C interface
+; Supported SMC firmware and bootloader versions
+SMC_MIN_VERSION = 43
+SMC_BOOTLOADER_MIN = 1
+SMC_BOOTLOADER_MAX = 3
+
+; I2C defines
 SMC_ADDR = $42
 
 SMC_GET_KEY = $07
@@ -35,19 +60,25 @@ SMC_BOOTLADER_GET_VER = $83
 SMC_BOOTLOADER_REWIND = $84
 SMC_BOOTLOADER_READ_FLASH = $85
 
+SMC_MAX_ATTEMPTS = 10
+
+; RAM buffer start address, buffer needs to hold at least $1e00 bytes of data
+SMC_RAM_BUF = $6100
+
 ;******************************************************************************
 ; Function name.......: smc_init
-; Purpose.............: Initializes SMC functions
+; Purpose.............: Initializes SMC functions. 
+;                       The SMC is selected for update by default. The function 
+;                       fetches current SMC version and SMC bootloader version, 
+;                       and stores these values to be used during the update.
 ; Input...............: Nothing
-; Returns.............: smc_status = SMC_STATUS_SELECTED
-;                       smc_curversion (3 bytes) = current version
-;                       smc_bootloader (1 byte) = current version
+; Returns.............: Nothing
 .proc smc_init
     ; Mark SMC for update (default)
     lda #SMC_STATUS_SELECTED
     sta smc_status
 
-    ; Get SMC firmware version
+    ; Get current SMC firmware version
     jsr smc_get_firmware_version
     sta smc_cur_version
     sty smc_cur_version+1
@@ -61,44 +92,48 @@ SMC_BOOTLOADER_READ_FLASH = $85
 
 ;******************************************************************************
 ; Function name.......: smc_run_prechecks
-; Purpose.............: Runs SMC pre-upgrade checks
+; Purpose.............: Runs the following SMC pre-upgrade checks:
+;                       1. SMC firmware major version <= SMC_MIN_VERSION
+;                       2. SMC write is enabled, if SMC firmware >= 47.2.4
+;                       3. Bootloader is installed
+;                       4. SMC_BOOTLOADER_MIN <= Bootloader version <= SMC_BOOTLOADER_MAX
+;                       5. Bad v2 bootloader (CRC-16 confirmed), run if SMC firmware >= 47.2.3
+;                       6. Bad v2 bootloader (high/low risk), run if SMC firmware < 47.2.3
+;                       7. CRC-16 check of SMC firmware loadad from package file
 ; Input...............: Nothing
 ; Returns.............: C=1 on error
 .proc smc_run_prechecks
-    ; Abort if not selected for update
+    ; Abort if SMC not selected for update
     lda smc_status
+    cmp #SMC_STATUS_UNSELECTED
     bne :+
     rts
 
-    ; Init and select SMC progress meter
-:   ldx header_smc_size
-    ldy header_smc_size+1
-    lda header_smc_size+2
-    jsr progress_smc_init
-    lda #2
+    ; Select SMC progress meter
+:   lda #2
     jsr progress_select
 
     ; Print title
     print 0, str4_smc
 
 t1:
-    ; Error: Unsupported firmware version (<43.0.0)
+    ; Test 1: Firmware version (>= SMC_MIN_VERSION)
     print 1, str4_smc_firmware
     lda smc_cur_version
     cmp #SMC_MIN_VERSION
     bcc :+
 
-    ; Test 1, OK
+    ; t1: OK
     print 1, str_ok_cr
     bra t2
 
-:   ; Test 1, fail
+:   ; t1: Fail
     print 1, str_fail_cr
     print 2, str4_smc_firmware_unsupported
     jmp fail
 
 t2:
-    ; Error: Write-enabled, possible to check from SMC v 47.2.4
+    ; Test 2: SMC is write-enabled, available from SMC firmware 47.2.4
     lda smc_cur_version
     cmp #47
     bcc t3
@@ -111,24 +146,26 @@ t2:
     cmp #4
     bcc t3
 
-:   ldx #SMC_ADDR
+:   ; SMC firmware is >= 47.2.4, continue
+    print 1, str4_smc_write_enabled
+
+    ; Read SMC extended fuse (efuse)
+    ldx #SMC_ADDR
     ldy #SMC_EFUSE
     jsr I2C_READ_BYTE
     lsr
-    bcs :+
+    bcs :+ ; efuse bit 0 is 1 => SMC not write-enabled
 
-    ; Test 2, OK
-    print 1, str4_smc_write_enabled
+    ; t2: OK
     print 1, str_ok_cr
     bra t3
 
-    ; Test 2, fail
-:   print 1, str4_smc_write_enabled
-    print 1, str_fail_cr
+    ; t2: Fail
+:   print 1, str_fail_cr
     jmp fail
 
 t3: 
-    ; Error: No bootloader
+    ; Test 3: Bootloader installed
     print 1, str4_smc_bootloader
 
     lda smc_bootloader
@@ -140,20 +177,20 @@ t3:
     jmp fail
 
 t4:
-    ; Error: Unsupported bootloader
+    ; Test 4: Bootloader supported, >= SMC_BOOTLOADER_MIN and <= SMC_BOOTLOADER_MAX
     lda smc_bootloader
     cmp #SMC_BOOTLOADER_MIN
     bcc :+
     cmp #SMC_BOOTLOADER_MAX+1
     bcc t5
 
-    ; Test 4, fail
+    ; t4: Fail
     print 1, str_fail_cr
     print 2, str4_smc_bootloader_unsupported
     jmp fail
 
 t5: 
-    ; Warning: Bad bootloader (confirmed), possible to check from firmware version 47.2.3
+    ; Test 5: Bad bootloader (confirmed), possible to check from SMC firmware version 47.2.3
     lda smc_cur_version
     cmp #47
     bcc t6
@@ -166,7 +203,8 @@ t5:
     cmp #3
     bcc t6
 
-:   jsr smc_get_bootloader_crc
+:   ; SMC firware is >= 47.2.3, continue
+    jsr smc_get_bootloader_crc
     cmp #0  ; Known good bootloader
     bne :+
     print 1, str_ok_cr
@@ -185,14 +223,17 @@ t5:
     bra t7
 
 t6: 
-    ; Warning: Bad bootloader (high risk), bootloader v2 + firmware 45.1.0
+    ; Test 6: Bad bootloader v2 (high risk or low risk)
     lda smc_bootloader
     cmp #2
     beq :+
+
+    ; Not bootloader v2
     print 1, str_ok_cr
     bra t7
 
-:   lda smc_cur_version
+:   ; Bootloader v2 + SMC firmware version 45.1.0 => Likely bad bootloader, otherwise low risk
+    lda smc_cur_version
     cmp #45
     bne :+
     lda smc_cur_version+1
@@ -212,7 +253,7 @@ t6:
 :   print 2,str4_smc_bad_bootloader1
 
 t7:
-    ; Try to load firmware
+    ; Test 7: Load SMC firmware into RAM buffer
     print 1, str4_smc_loading
     jsr smc_load
     bcc :+
@@ -230,6 +271,7 @@ exit:
     rts
 
 fail:
+    ; Return with error code
     sec
     lda #SMC_STATUS_PRECHECK_FAIL
     sta smc_status
@@ -239,13 +281,14 @@ fail:
 ;******************************************************************************
 ; Function name.......: smc_update
 ; Purpose.............: Updates the SMC firmware
+; Prerequisite........: Successfully call smc_run_prechecks
 ; Input...............: Nothing
 ; Returns.............: C=1 on error
 .proc smc_update
     ; Disable interrupts
     sei
 
-    ; Return if status != LOAD_PASS
+    ; Abort if status is not SMC_STATUS_LOAD_PASS
     lda smc_status
     cmp #SMC_STATUS_LOAD_PASS
     beq :+
@@ -256,6 +299,7 @@ fail:
     print 0, str5_smc_header
 
 wait_key:
+    ; Wait for key
     print 1, str5_smc_wait_key
     jsr util_wait_keypress
 
@@ -263,7 +307,7 @@ wait_key:
     print 1, str5_smc_start_bootloader
     ldx #SMC_ADDR
     ldy #SMC_BOOTLOADER_START
-    lda #$31
+    lda #$31 ; Magic value required by this SMC command
     jsr I2C_WRITE_BYTE
 
     ; Wait max 20 seconds
@@ -276,28 +320,28 @@ wait_key:
     ldx #SMC_ADDR
     ldy #SMC_BOOTLOADER_VER
     jsr I2C_READ_BYTE
-    cmp #0
+    cmp #0 ; When bootloader is started, reading this command offset returns 0
     bne wait_key
 
-    ; Clear byte count
-    stz count
+    ; Setup variables
+    stz count               ; Clear byte count
     stz count+1
 
-    ; Clear checksum
-    stz checksum
+    stz checksum            ; Clear checksum
 
-    ; Set max attempts
-    lda #10
+    lda #SMC_MAX_ATTEMPTS   ; Set max attempts
     sta attempts
 
-    ; Setup pointer to end of firmware, $5f00 + header_smc_size
+    ; Pointer to end of firmware, i.e. SMC_RAM_BUF + header_smc_size
+    clc
     lda header_smc_size
+    adc #<SMC_RAM_BUF
     sta smc_src_addr
     lda header_smc_size+1
-    adc #$5f
+    adc #>SMC_RAM_BUF
     sta smc_src_addr+1
 
-    ; Pad end of firmware to page boundary
+    ; Pad end of firmware to page boundary (page size 64 bytes)
     lda header_smc_size
     eor #$ff
     and #$3f
@@ -318,12 +362,13 @@ wait_key:
     sta (smc_src_addr),y
     bra :-
 
-    ; Setup pointer to start of firmware, $5f00
-:   stz smc_src_addr
-    lda #$5f
+    ; Set pointer to start of firmware
+:   lda #<SMC_RAM_BUF
+    sta smc_src_addr
+    lda #>SMC_RAM_BUF
     sta smc_src_addr+1
 
-    ; Setup progress meter
+    ; Select progress meter
     lda #2
     jsr progress_select
 
@@ -331,7 +376,7 @@ wait_key:
     print 1, str5_smc_write
 
 loop:
-    ; End of stream?
+    ; At end of stream?
     lda count
     cmp size
     bne send
@@ -340,9 +385,9 @@ loop:
     beq complete
 
 send:
-    ; Send byte
+    ; Transmit byte to bootloader
     ldx #SMC_ADDR
-    ldy #$80
+    ldy #SMC_BOOTLOADER_TRANSMIT
     lda (smc_src_addr)
     jsr I2C_WRITE_BYTE
 
@@ -353,15 +398,15 @@ send:
     sta checksum
 
 commit:
-    ; Check if at end of package
+    ; At end of package?
     lda count
     and #7
     cmp #7
     bne next
 
-    ; Send checksum
+    ; Calculate and send checksum; checksum is the 2's complement of the sum of the previous 8 bytes in the packet
     ldx #SMC_ADDR
-    ldy #$80
+    ldy #SMC_BOOTLOADER_TRANSMIT
     lda checksum
     eor #$ff
     inc
@@ -370,14 +415,14 @@ commit:
     ; Clear checksum
     stz checksum
 
-    ; Commit
+    ; Send commit packet command
     ldx #SMC_ADDR
-    ldy #$81
+    ldy #SMC_BOOTLOADER_COMMIT
     jsr I2C_READ_BYTE
-    cmp #1
+    cmp #1 ; Return value 1 = OK, other return values indicate an error
     beq next
 
-    ; Commit failed
+    ; Commit failed, abort update if reaching max attempts
     dec attempts
     beq fail
     
@@ -393,7 +438,7 @@ commit:
 
 next:
     ; Reset attempts
-    lda #10
+    lda #SMC_MAX_ATTEMPTS
     sta attempts
 
     ; Increment byte count
@@ -431,25 +476,34 @@ complete:
     rts
 
 fail:
+    ; Print fail message
     pha
     print 1, str5_smc_update_failed
     pla
+
+    ; Print last error code
     jsr util_print_num
     lda #13
     jsr CHROUT
+
+    ; Set status
     lda #SMC_STATUS_UPDATE_FAIL
     sta smc_status
     sec
     rts
 
 callback:
+    ; Check if bootloader is active
     ldx #SMC_ADDR
     ldy #SMC_BOOTLOADER_VER
     jsr I2C_READ_BYTE
-    cmp #0
+    cmp #0 ; Reading this command offset returns 0 if bootloader is active
     bne :+
+
+    ; End countdown
     print 1, str_ok_cr
     stz util_countdown::counter
+
 :   rts
 
 count:
@@ -464,12 +518,19 @@ attempts:
 
 ;******************************************************************************
 ; Function name.......: smc_verify
-; Purpose.............: Verifies SMC update
+; Purpose.............: Verifies the SMC firmware to the RAM buffer
 ; Input...............: Nothing
 ; Returns.............: Nothing
 ; Error...............: C=1 if verify failed
 .proc smc_verify
-    ; Check bootloader version, verify available from v3
+    ; Abort if state is not SMC_STATUS_UPDATE_PASS
+    lda smc_status
+    cmp #SMC_STATUS_UPDATE_PASS
+    beq :+
+    clc
+    rts
+
+:   ; Abort if bootloader version < 3, when support for verifying an update was added
     lda smc_bootloader
     cmp #$ff
     bne :+
@@ -484,7 +545,7 @@ attempts:
 :   ; Print verifying message
     print 1, str5_smc_verify
 
-    ; Setup progress meter
+    ; Select progress meter
     lda #2
     jsr progress_select
 
@@ -493,15 +554,14 @@ attempts:
     stz count+1
 
     ; Set pointer to start of new SMC firmware in RAM
-    lda #$00
+    lda #<SMC_RAM_BUF
     sta smc_src_addr
-    lda #$5f
+    lda #>SMC_RAM_BUF
     sta smc_src_addr+1
 
     ; Rewind target address
     ldx #SMC_ADDR
     ldy #SMC_BOOTLOADER_REWIND
-    lda #0
     jsr I2C_WRITE_BYTE
 
 loop:
@@ -510,33 +570,38 @@ loop:
     ldy #SMC_BOOTLOADER_READ_FLASH
     jsr I2C_READ_BYTE
 
+    ; Check if first page, special action needed.
+    ; Bootloader v3 moves the firmware's Reset vector to EE_RDY, 
+    ; and points the Reset vector to start of the bootloader.
+    ; Byte addresses $0001-0002 and $0012-0013 will not match
+    ; the content of the RAM buffer.
     ldx count+1
     bne compare
     ldx count
 
-    ; Byte $0000? Should always be $ff
+    ; Byte address $0000? Should always be $ff
     bne :+
     cmp #$ff
     bne failed
     bra next
 
-    ; Byte $0001? Should always be $ce
+    ; Byte address $0001? Should always be $ce
 :   cpx #1
     bne :+
     cmp #$ce
     bne failed
     bra next
 
-    ; Byte $0012? Should be Reset vector minus 9, low byte
+    ; Byte address $0012? Should be Reset vector minus 9, low byte
 :   cpx #$12
     bne :+
     tay
 
     sec
-    lda $5f00
+    lda SMC_RAM_BUF
     sbc #9
     sta ee_rdy
-    lda $5f01
+    lda SMC_RAM_BUF+1
     sbc #0
     and #%11001111
     ora #%11000000
@@ -546,7 +611,7 @@ loop:
     bne failed
     bra next
 
-    ; Byte $0013? Should be Reset vector minus 9, high byte
+    ; Byte address $0013? Should be Reset vector minus 9, high byte
 :   cpx #$13
     bne compare
     cmp ee_rdy+1
@@ -571,6 +636,7 @@ next:
     jsr progress
 
 done:
+    ; Check if all bytes have been verified
     lda count
     cmp header_smc_size
     bne loop
@@ -580,8 +646,10 @@ done:
     jmp loop
 
 exit:
+    ; Update progress meter
     jsr progress
     
+    ; Return without errors
     lda #SMC_STATUS_VERIFY_PASS
     sta smc_status
     print 1, str_ok_cr
@@ -589,20 +657,7 @@ exit:
     rts
 
 failed:
-    jsr util_print_num
-    lda #32
-    jsr CHROUT
-    lda (smc_src_addr)
-    jsr util_print_num
-    lda #32
-    jsr CHROUT
-    lda count
-    jsr util_print_num
-    lda #32
-    jsr CHROUT
-    lda count+1
-    jsr util_print_num
-
+    ; Return with error
     lda #SMC_STATUS_VERIFY_FAIL
     sta smc_status
     print 1, str_fail_cr
@@ -610,20 +665,28 @@ failed:
     rts
 
 progress:
+    ; Updates progress meter
     ldx count
     ldy count+1
-    lda #0
+    lda #0 ; MSB always 0 for the SMC
     jmp progress_update
 
 count: .res 2
 ee_rdy: .res 2
 .endproc
 
+;******************************************************************************
+; Function name.......: smc_reboot
+; Purpose.............: Resets the SMC, which will reboot the system
+; Input...............: Nothing
+; Returns.............: Nothing
+; Error...............: C=1 if verify failed
 .proc smc_reboot
-    ; Check if SMC was selected for update, return if not
+    ; Abort if SMC was not selected for update
     lda smc_status
     cmp #SMC_STATUS_UNSELECTED
     bne :+
+    clc
     rts
 
 :   ; Wait 5 seconds
@@ -638,13 +701,22 @@ ee_rdy: .res 2
     ldy #SMC_BOOTLOADER_REBOOT
     jsr I2C_WRITE_BYTE
 
+    ; Wait 2 seconds, the computer should turn off before the end of the delay
+    jsr util_delay_1s
+    jsr util_delay_1s
+
+    ; We're still alive, consequently the bad bootloader v2
+    print 1, str5_smc_bad_bootloader
+
+    ; Wait until user resets SMC manually
 :   bra :-
+
 .endproc
 
 ;******************************************************************************
 ; Function name.......: smc_load
-; Purpose.............: Loads new SMC firmware from data file into low RAM
-;                       address range $5F00-7EFF
+; Purpose.............: Loads new SMC firmware from data file into RAM buffer
+;                       at address SMC_RAM_BUF
 ; Input...............: Nothing
 ; Returns.............: Nothing
 ; Error...............: C=1 if load failed
@@ -667,9 +739,9 @@ ee_rdy: .res 2
     jsr crc16_init
 
     ; Read firmware from file
-    lda #$00
+    lda #<SMC_RAM_BUF
     sta r1
-    lda #$5f
+    lda #>SMC_RAM_BUF
     sta r1+1
     lda header_smc_size
     sta r2
@@ -728,19 +800,21 @@ progress:
 ;                       Y = minor
 ;                       X = patch
 .proc smc_get_firmware_version
+    ; Read version
     ldx #SMC_ADDR
     ldy #SMC_VER_MAJOR
-
 :   jsr I2C_READ_BYTE
     pha
     iny
     cpy #SMC_VER_PATCH+1
     bcc :-
 
+    ; Pull version, patch-minor-major, from stack
     plx
     ply
     pla
 
+    ; If major version is $ff, return v 0.0.0
     cmp #$ff
     bne :+
 
@@ -820,16 +894,19 @@ temp: .res 1
     jsr I2C_WRITE_BYTE
 
 loop:
+    ; Read byte from SMC flash
     ldx #SMC_ADDR
     ldy #SMC_READ_FLASH
     jsr I2C_READ_BYTE
     jsr crc16_update
 
+    ; Decrement counter
     lda counter
     bne :+
     dec counter+1
 :   dec counter
 
+    ; Go back to start of loop if not done
     lda counter
     ora counter+1
     bne loop

@@ -203,6 +203,22 @@ crc:
     jsr file_read
     bcs load_err
 
+setup_progress:
+    ldx header_rom_size
+    ldy header_rom_size+1
+    lda header_rom_size+2
+    jsr progress_kernal_init
+
+    ldx header_vera_size
+    ldy header_vera_size+1
+    lda header_vera_size+2
+    jsr progress_vera_init
+
+    ldx header_smc_size
+    ldy header_smc_size+1
+    lda header_smc_size+2
+    jsr progress_smc_init
+
 exit:
     lda #<header_rom_ver
     lda #>header_rom_ver

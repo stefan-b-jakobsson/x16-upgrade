@@ -214,6 +214,12 @@ str5_smc_update_failed:
 str5_smc_reset:
     .byt "System reset... ", 0
 
+str5_smc_bad_bootloader:
+    .byt "Corrupted (bad) bootloader v2 detected. "
+    .byt "DO NOT disconnect the computer from power. "
+    .byt "Finish the update by grounding SMC reset "
+    .byt "pin (#10). Check the README file before "
+    .byt "you proceed.", 0
 
 ; Screen 6: Warning
 
