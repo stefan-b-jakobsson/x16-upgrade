@@ -1,3 +1,29 @@
+; Copyright (c) 2024, Stefan Jakobsson
+
+; Redistribution and use in source and binary forms, with or without 
+; modification, are permitted provided that the following conditions are met:
+
+; (1) Redistributions of source code must retain the above copyright notice, 
+;     this list of conditions and the following disclaimer. 
+;
+; (2) Redistributions in binary form must reproduce the above copyright notice,
+;     this list of conditions and the following disclaimer in the documentation
+;     and/or other materials provided with the distribution.
+
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+; ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+; LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+; CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+; SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+; INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+; CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+; POSSIBILITY OF SUCH DAMAGE.
+
+
+; ROM update status values
 ROM_STATUS_UNSELECTED = 0
 ROM_STATUS_SELECTED = 1
 ROM_STATUS_PRECHECK_FAIL = 2
@@ -9,8 +35,13 @@ ROM_STATUS_UPDATE_PASS = 7
 ROM_STATUS_VERIFY_FAIL = 8
 ROM_STATUS_VERIFY_PASS = 9
 
-
+; Chip ID (MSB, LSB)
 ROM_CHIP_ID = $b7bf
+
+; ROM buffer
+ROM_BUF = $7f00
+
+ROM_MAX_ATTEMPTS = 10
 
 ;******************************************************************************
 ; Function name.......: rom_init
@@ -25,16 +56,17 @@ ROM_CHIP_ID = $b7bf
 
 ;******************************************************************************
 ; Function name.......: rom_run_prechecks
-; Purpose.............: Runs the following prechecks:
-;                       - Write protect detection
-;                       - Manufacturer and chip ID check
-;                       - Firmware load and CRC-16 check
+; Purpose.............: Runs the following pre-upgrade checks:
+;                       1. ROM chip write enabled
+;                       2. ROM chip ID
+;                       3. CRC-16 check of SMC firmware loaded from package file
 ; Input...............: Nothing
 ; Returns.............: Nothing
 ; Error...............: C=1 on error
 .proc rom_run_prechecks
     ; Abort if ROM is unselected
     lda rom_status
+    cmp #ROM_STATUS_UNSELECTED
     bne :+
     clc
     rts
@@ -46,11 +78,8 @@ ROM_CHIP_ID = $b7bf
     php
     sei
 
-    ; Save ROM bank in X
-    ldx ROM_SEL
-
 t1:
-    ; Test 1: Chip write-protected
+    ; Test 1: Chip write-enabled
     print 1, str4_rom_write_enabled
     
     ; Attempt to write $ff to $01:$ffff
@@ -88,7 +117,7 @@ t2:
     bra fail
 
 t3: 
-    ; Test 3: Try to load ROM
+    ; Test 3: Try to load ROM from package file
     jsr rom_load
     bcc :+
 
@@ -100,25 +129,28 @@ t3:
 :   print 1, str_ok_cr
 
 pass:
+    ; Restore IRQ flag
+    plp
+    
     ; Set status
     lda #ROM_STATUS_LOAD_PASS
     sta rom_status
-
-exit:
-    ; Restore IRQ flag
-    plp
 
     ; Set return values
     clc
     rts
 
 fail:
+    ; Restore IRQ flag
+    plp
+
     ; Set status
     lda #ROM_STATUS_PRECHECK_FAIL
     sta rom_status
 
     ; Set return values
-    bra exit
+    sec
+    rts
 .endproc
 
 ;******************************************************************************
@@ -128,12 +160,14 @@ fail:
 ; Returns.............: Nothing
 ; Errors..............: C=1 on ROM write error
 .proc rom_update
-    ; Abort if status != PRECHECK_PASS
+    ; Start update if status is ROM_STATUS_LOAD_PASS
     lda rom_status
     cmp #ROM_STATUS_LOAD_PASS
     beq :+
     cmp #ROM_STATUS_PRECHECK_PASS
     beq :+
+
+    ; Otherwise abort
     sec
     rts
 
@@ -142,39 +176,45 @@ fail:
 
     ; Load ROM from file
     lda rom_status
-    cmp #ROM_STATUS_LOAD_PASS
-    beq :+
+    cmp #ROM_STATUS_PRECHECK_PASS
+    bne :+
     jsr rom_load
+    bcc :+
 
-    ; Disable interrupts
+    ; Abort, loading ROM failed
+    lda #ROM_STATUS_LOAD_FAIL
+    sta rom_status
+    sec
+    rts
+
+    ; Disable interrupts, shouldn't be re-enabled after this point
 :   sei
 
     ; Setup
-    stz rom_src_addr        ; RAM address where new ROM image is stored
-    lda #$7f
+    lda #<ROM_BUF           ; RAM address where new ROM image is stored
+    sta rom_src_addr
+    lda #>ROM_BUF
     sta rom_src_addr+1
 
-    stz rom_target_bank     ; ROM address start
+    stz rom_target_bank     ; ROM address start, $c000
     stz rom_target_addr
     lda #$c0
     sta rom_target_addr+1
 
-    stz count               ; Byte count
+    stz count               ; Clear byte count
     stz count+1
     stz count+2
 
     lda #0                  ; Select progress meter
     jsr progress_select
 
-    lda #10                 ; Set max write errors
+    lda #ROM_MAX_ATTEMPTS   ; Set max write errors
     sta attempts
 
     ; Chip erase
     print 1, str5_rom_erase
     jsr rom_erase
-    print 1, str_ok
-    lda #13
-    jsr CHROUT
+    print 1, str_ok_cr
 
     ; Write loop
     print 1, str5_rom_write
@@ -186,19 +226,24 @@ loop:
     dec attempts
     bne loop
     
-    ; Return with error, write errors
+    ; Write error
     lda #ROM_STATUS_UPDATE_FAIL
     sta rom_status
     sec
     rts
 
+    ; Reset attempts counter
+:   lda #ROM_MAX_ATTEMPTS
+    sta attempts
+
     ; Increment byte count
-:   inc count
+    inc count
     bne :++
     inc count+1
     bne :+
     inc count+2
 
+    ; Update progress meter
 :   ldx count
     ldy count+1
     lda count+2
@@ -222,9 +267,9 @@ src_inc:
     inc rom_src_addr+1
     
     lda rom_src_addr+1
-    cmp #$c0
+    cmp #$c0 ; Overflow into ROM area, goto start of next RAM bank
     beq :+
-    cmp #$9f
+    cmp #$9f ; Overflow into IO area, goto RAM bank 1
     bne target_inc
     stz RAM_SEL
 
@@ -238,7 +283,7 @@ target_inc:
     bne loop
     inc rom_target_addr+1
     bne loop
-    lda #$c0
+    lda #$c0 ; Overflow, goto start of next ROM bank
     sta rom_target_addr+1
     inc rom_target_bank
     bra loop
@@ -264,7 +309,7 @@ attempts: .res 1
 ; Input...............: Nothing
 ; Returns.............: C=1 if verify failed
 .proc rom_verify
-    ; Abort if status != PRECHECK_PASS
+    ; Abort if status is not ROM_STATUS_UPDATE_PASS
     lda rom_status
     cmp #ROM_STATUS_UPDATE_PASS
     beq :+
@@ -277,8 +322,9 @@ attempts: .res 1
     ; Setup
     stz ROM_SEL
     
-    stz rom_src_addr
-    lda #$7f
+    lda #<ROM_BUF
+    sta rom_src_addr
+    lda #>ROM_BUF
     sta rom_src_addr+1
 
     stz rom_target_addr
@@ -298,13 +344,14 @@ loop:
     cmp (rom_target_addr)
     bne fail
 
-    ; Increment
+    ; Increment byte count
     inc count
     bne :++
     inc count+1
     bne :+
     inc count+2
 
+    ; Update progress meter
 :   ldx count
     ldy count+1
     lda count+2
@@ -322,14 +369,15 @@ loop:
     beq ok
 
 next:
+    ; Increment source address
     inc rom_src_addr
     bne @2
-
     inc rom_src_addr+1
+    
     lda rom_src_addr+1
-    cmp #$c0
+    cmp #$c0 ; Overflow into ROM area, goto start of next RAM bank
     beq @1
-    cmp #$9f
+    cmp #$9f ; Overflow into IO area, goto start of RAM bank 1
     bne @2
     stz RAM_SEL
 
@@ -337,37 +385,43 @@ next:
     lda #$a0
     sta rom_src_addr+1
 
+    ; Increment target address
 @2: inc rom_target_addr
     bne loop
     inc rom_target_addr+1
     bne loop
-    inc ROM_SEL
-    lda #$c0
+    lda #$c0 ; Overflow, goto start of next ROM bank
     sta rom_target_addr+1
+    inc ROM_SEL
     bra loop
 
 ok:
+    ; Select Kernal ROM bank
     stz ROM_SEL
    
-    print 1,str_ok
-    lda #13
-    jsr CHROUT
+    ; Print message
+    print 1,str_ok_cr
    
+    ; Set status
     lda #ROM_STATUS_VERIFY_PASS
     sta rom_status
     
+    ; Return with OK
     clc
     rts
 
-fail:    
+fail:
+    ; Select Kernal ROM bank
     stz ROM_SEL
-    print 1, str_fail
-    lda #13
-    jsr CHROUT
 
+    ; Print message
+    print 1, str_fail_cr
+
+    ; Set status
     lda #ROM_STATUS_VERIFY_FAIL
     sta rom_status
     
+    ; Return with error
     sec
     rts
 
@@ -384,14 +438,11 @@ count: .res 3
     ; Reset CRC
     jsr crc16_init
 
-    ; Setup progress
-    ldx header_rom_size
-    ldy header_rom_size+1
-    lda header_rom_size+2
-    jsr progress_kernal_init
+    ; Select progress meter
     lda #0
     jsr progress_select
 
+    ; Print header
     print 1, str4_rom_progress
 
     ; Open file and seek start of ROM firmware
@@ -426,17 +477,23 @@ count: .res 3
     jsr file_read
     bcs err
     
-    ; Close and exit
+    ; Close file
     jsr file_close
+
+    ; Return with error
     clc
     rts
 
 err:
+    ; Close file
     jsr file_close
+
+    ; Return with error
     sec
     rts
 
 callback:
+    ; Calculate number of bytes updated
     sec
     lda header_rom_size
     sbc r2
@@ -446,6 +503,8 @@ callback:
     tay
     lda header_rom_size+2
     sbc r2+2
+
+    ; Update progress meter
     jmp progress_update
 .endproc
 
@@ -455,6 +514,10 @@ callback:
 ; Input...............: Nothing
 ; Returns.............: X = LSB, Y = MSB
 .proc rom_read_chip_id
+    ; Disable IRQ
+    php
+    sei
+
     ; Save ROM bank on stack
     lda ROM_SEL
     pha
@@ -491,6 +554,11 @@ callback:
     ; Restore ROM bank
     pla
     sta ROM_SEL
+
+    ; Restore IRQ flag
+    plp
+
+    ; Return
     rts
 .endproc
 
@@ -500,6 +568,10 @@ callback:
 ; Input...............: Nothing
 ; Returns.............: Nothing
 .proc rom_erase
+    ; Disable IRQ
+    php
+    sei
+
     ; Store current ROM bank in X
     ldx ROM_SEL
 
@@ -535,7 +607,13 @@ wait:
     bne wait
 
 exit:
+    ; Restore ROM bank
     stx ROM_SEL
+
+    ; Restore IRQ flag
+    plp
+
+    ; Return
     rts
 
 .endproc
@@ -548,10 +626,15 @@ exit:
 ; Returns.............: Nothing
 ; Errors..............: C=1 if write operation failed
 .proc rom_write
-    ; Save current ROM bank
+    ; Disable IRQ
+    php
+    sei
+
+    ; Save current ROM bank on stack
     ldx ROM_SEL
     phx
 
+    ; Get target ROM bank
     ldx rom_target_bank
 
     ; Enter byte programming mode
@@ -572,11 +655,14 @@ exit:
     stx ROM_SEL
     sta (rom_target_addr)
 
+    ; Test if the ROM chip entered byte programming mode
+    ; Reading the same target address returns alternating values immediately after programming an ROM address
     lda (rom_target_addr)
     cmp (rom_target_addr)
     beq fail
 
 wait:
+    ; Wait until reading the target address no longer returns alternating values => byte programming done
     lda (rom_target_addr)
     cmp (rom_target_addr)
     bne wait
@@ -585,13 +671,22 @@ wait:
     plx
     stx ROM_SEL
 
+    ; Retore IRQ flag
+    plp
+
+    ; Return without errors
     clc
     rts
 
 fail:
+    ; Restore ROM bank
     plx
     stx ROM_SEL
+
+    ; Restore IRQ flag
+    plp
     
+    ; Return with error
     sec
     rts
     
