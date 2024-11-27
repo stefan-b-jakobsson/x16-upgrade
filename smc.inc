@@ -99,7 +99,7 @@ SMC_RAM_BUF = $6100
 ;                       4. SMC_BOOTLOADER_MIN <= Bootloader version <= SMC_BOOTLOADER_MAX
 ;                       5. Bad v2 bootloader (CRC-16 confirmed), run if SMC firmware >= 47.2.3
 ;                       6. Bad v2 bootloader (high/low risk), run if SMC firmware < 47.2.3
-;                       7. CRC-16 check of SMC firmware loadad from package file
+;                       7. CRC-16 check of SMC firmware loaded from package file
 ; Input...............: Nothing
 ; Returns.............: C=1 on error
 .proc smc_run_prechecks
