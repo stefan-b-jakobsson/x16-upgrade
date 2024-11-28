@@ -205,7 +205,7 @@ fail:
     stz count+1
     stz count+2
 
-    lda #0                  ; Select progress meter
+    lda #PROGRESS_ROM       ; Select progress meter
     jsr progress_select
 
     lda #ROM_MAX_ATTEMPTS   ; Set max write errors
@@ -335,7 +335,7 @@ attempts: .res 1
     stz count+1
     stz count+2
 
-    lda #0
+    lda #PROGRESS_ROM
     jsr progress_select
 
 loop:    
@@ -439,7 +439,7 @@ count: .res 3
     jsr crc16_init
 
     ; Select progress meter
-    lda #0
+    lda #PROGRESS_ROM
     jsr progress_select
 
     ; Print header

@@ -1,100 +1,131 @@
+; Copyright (c) 2024, Stefan Jakobsson
+
+; Redistribution and use in source and binary forms, with or without 
+; modification, are permitted provided that the following conditions are met:
+
+; (1) Redistributions of source code must retain the above copyright notice, 
+;     this list of conditions and the following disclaimer. 
+;
+; (2) Redistributions in binary form must reproduce the above copyright notice,
+;     this list of conditions and the following disclaimer in the documentation
+;     and/or other materials provided with the distribution.
+
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+; ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+; LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+; CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+; SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+; INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+; CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+; POSSIBILITY OF SUCH DAMAGE.
+
+PROGRESS_ROM = 0
+PROGRESS_VERA = 1
+PROGRESS_SMC = 2
+
 ;******************************************************************************
-; Function name.......: progress_kernal_init
-; Purpose.............: Inits progress meter for kernal upgrade
-; Input...............: X = End value, bits 0..7
-;                       Y = End value, bits 8..15
-;                       A = End value, bits 16..23
+; Function name.......: progress_init
+; Purpose.............: Inits progress meters
+; Prerequisite........: Call header_fetch
 ; Error...............: C=1 if end value is 0
-.proc progress_kernal_init
-    stx progress_kernal_end
-    sty progress_kernal_end+1
-    sta progress_kernal_end+2
+.proc progress_init
+    ; ROM
+    ldx header_rom_size     ; Get size
+    ldy header_rom_size+1
+    lda header_rom_size+2
 
-    jsr progress_step_value
-    stx progress_kernal_step
-    sty progress_kernal_step+1
-    sta progress_kernal_step+2
+    stx progress_rom_end    ; Store size
+    sty progress_rom_end+1
+    sta progress_rom_end+2
 
-    rts
-.endproc
+    jsr progress_step_value ; Calculate 5 % step value
+    bcs fail
+    stx progress_rom_step
+    sty progress_rom_step+1
+    sta progress_rom_step+2
 
-;******************************************************************************
-; Function name.......: progress_vera_init
-; Purpose.............: Inits progress meter for vera upgrade
-; Input...............: X = End value, bits 0..7
-;                       Y = End value, bits 8..15
-;                       A = End value, bits 16..23
-; Error...............: C=1 if end value is 0
-.proc progress_vera_init
+    ; VERA
+    ldx header_vera_size
+    ldy header_vera_size+1
+    lda header_vera_size+2
+
     stx progress_vera_end
     sty progress_vera_end+1
     sta progress_vera_end+2
 
     jsr progress_step_value
+    bcs fail
     stx progress_vera_step
     sty progress_vera_step+1
     sta progress_vera_step+2
 
-    rts
-.endproc
+    ; SMC
+    ldx header_smc_size
+    ldy header_smc_size+1
+    lda #0
 
-;******************************************************************************
-; Function name.......: progress_smc_init
-; Purpose.............: Inits progress meter for vera upgrade
-; Input...............: X = End value, bits 0..7
-;                       Y = End value, bits 8..15
-;                       A = End value, bits 16..23
-; Error...............: C=1 if end value is 0
-.proc progress_smc_init
     stx progress_smc_end
     sty progress_smc_end+1
     sta progress_smc_end+2
 
     jsr progress_step_value
+    bcs fail
     stx progress_smc_step
     sty progress_smc_step+1
     sta progress_smc_step+2
 
+    clc
     rts
+
+fail:
+    rts
+
 .endproc
 
 ;******************************************************************************
 ; Function name.......: progress_select
 ; Purpose.............: Selects one of the three progress meters
 ; Input...............: A = progress meter:
-;                           0: Kernal
+;                           0: ROM
 ;                           1: VERA
 ;                           2: SMC
+; Returns.............: Nothing
 .proc progress_select
     ldy #6
 
-    cmp #0
+    cmp #PROGRESS_ROM
     bne :+
-    ldx #6
+    ldx #6 ; Table index
     bra copy
 
-:   cmp #1
+:   cmp #PROGRESS_VERA
     bne :+
-    ldx #12
+    ldx #12 ; Table index
     bra copy
 
-:   cmp #2
+:   cmp #PROGRESS_SMC
     bne exit
-    ldx #18
+    ldx #18 ; Table index
 
 copy:
-    lda progress_kernal_end-1,x
+    ; Copy end value
+    lda progress_rom_end-1,x
     sta progress_cur_end-1,y
     dex
     dey
     bne copy
 
+    ; Copy step value
     ldx #3
 :   lda progress_cur_step-1,x
     sta progress_cur_next-1,x
     dex
     bne :-
 
+    ; Setup, current progress 0 %
     stz progress_cur_pct
 
 exit:
@@ -222,13 +253,16 @@ step:
     cmp progress_cur_end+2
     bne :+
 
+    ; Yes, is at end, return 100 %
     lda #100
-    cmp progress_cur_pct
+    cmp progress_cur_pct ; Avoid printing 100 % value more than once
     beq exit
-    sta progress_cur_pct
+
+    sta progress_cur_pct ; Print 100 % value
     bra pr
 
-:   cmp progress_cur_next+2
+:   ; At next 5 % threshold?
+    cmp progress_cur_next+2
     bcc exit
     bne :+ 
     cpy progress_cur_next+1
@@ -237,11 +271,13 @@ step:
     cpx progress_cur_next
     bcc exit
 
-:   clc
+:   ; Yes, increment progress with 5 % units
+    clc
     lda progress_cur_pct
     adc #5
     sta progress_cur_pct
 
+    ; Calculate next 5 % threshold
     clc
     lda progress_cur_next
     adc progress_cur_step
@@ -256,7 +292,7 @@ step:
     sta progress_cur_next+2
 
 pr:
-    ; Delete chars
+    ; Delete previosly printed progress % (2 or 3 chars)
     ldx #2
     lda progress_cur_pct
     cmp #11
@@ -267,7 +303,7 @@ pr:
     dex
     bne :-
 
-    ; Output progress value
+    ; Print progress %
     lda progress_cur_pct
     jsr util_print_num
     lda #'%'
@@ -283,8 +319,8 @@ progress_cur_step: .res 3
 progress_cur_next: .res 3
 progress_cur_pct: .res 1
 
-progress_kernal_end: .res 3
-progress_kernal_step: .res 3
+progress_rom_end: .res 3
+progress_rom_step: .res 3
 
 progress_vera_end: .res 3
 progress_vera_step: .res 3

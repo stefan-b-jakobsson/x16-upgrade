@@ -110,7 +110,7 @@ SMC_RAM_BUF = $6100
     rts
 
     ; Select SMC progress meter
-:   lda #2
+:   lda #PROGRESS_SMC
     jsr progress_select
 
     ; Print title
@@ -369,7 +369,7 @@ wait_key:
     sta smc_src_addr+1
 
     ; Select progress meter
-    lda #2
+    lda #PROGRESS_SMC
     jsr progress_select
 
     ; Print write message
@@ -546,7 +546,7 @@ attempts:
     print 1, str5_smc_verify
 
     ; Select progress meter
-    lda #2
+    lda #PROGRESS_SMC
     jsr progress_select
 
     ; Clear counter
