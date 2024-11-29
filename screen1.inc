@@ -38,6 +38,7 @@
     bcs exit
     jsr header_run_prechecks
     bcs exit
+    jsr progress_init
     jmp screen2_show
 
 exit:

@@ -1,19 +1,51 @@
+; Copyright (c) 2024, Stefan Jakobsson
+
+; Redistribution and use in source and binary forms, with or without 
+; modification, are permitted provided that the following conditions are met:
+
+; (1) Redistributions of source code must retain the above copyright notice, 
+;     this list of conditions and the following disclaimer. 
+;
+; (2) Redistributions in binary form must reproduce the above copyright notice,
+;     this list of conditions and the following disclaimer in the documentation
+;     and/or other materials provided with the distribution.
+
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+; ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+; LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+; CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+; SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+; INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+; CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+; POSSIBILITY OF SUCH DAMAGE.
+
 HEADER_FIXED_PART_SIZE = 103
 HEADER_MIN_VER = 1
 HEADER_MAX_VER = 1
+
+HEADER_BLOB_ROM = 1
+HEADER_BLOB_VERA = 2
+HEADER_BLOB_SMC = 3
 
 ;******************************************************************************
 ; Function name.......: header_fetch
 ; Purpose.............: Reads package header from file; also gets the total
 ;                       file size
 ; Input...............: Nothing
-; Returns.............: Fetched data stored in the following variables:
+; Returns.............: Header data stored in the following variables:
+;                       Fixed part:
 ;                       - header_magic          6 bytes
 ;                       - header_ver            1 byte
 ;                       - header_pkg_info       64 bytes, null-terminated
 ;                       - header_created_by     16 bytes, null-terminated
 ;                       - header_created_on     14 bytes
 ;                       - header_blob_count     2 bytes
+;                       - Total                 103 bytes
+;                       
+;                       Blob metadata:
 ;                       - header_rom_ver        1 byte
 ;                       - header_rom_size       3 bytes
 ;                       - header_rom_crc        2 bytes
@@ -26,6 +58,13 @@ HEADER_MAX_VER = 1
 ;                       - header_smc_size       3 bytes
 ;                       - header_smc_crc        2 bytes
 ;                       - header_smc_start      3 bytes
+;                       - header_file_size      3 bytes
+;
+;                       Header CRC-16:
+;                       - header_crc1           1 byte
+;                       - header_crc2           1 byte
+;
+;                       Package file size:
 ;                       - header_file_size      3 bytes
 ; Error...............: C=1 on read error
 .proc header_fetch
@@ -40,7 +79,7 @@ HEADER_MAX_VER = 1
     bcc :+
     rts
 
-    ; Fetch fixed part of header (103 bytes)
+    ; Read fixed part of header (103 first bytes from the package file) into header_buf
 :   lda #<header_buf
     sta r1
     lda #>header_buf
@@ -55,12 +94,13 @@ HEADER_MAX_VER = 1
     bcc :+
     jmp load_err
 
-:   jsr file_get_size
+:   ; Get file size
+    jsr file_get_size
     stx header_file_size
     sty header_file_size+1
     sta header_file_size+2
 
-    ; Set blob counter
+    ; Set BLOB count
     lda header_blob_count
     sta blobs
     lda header_blob_count+1
@@ -72,7 +112,7 @@ HEADER_MAX_VER = 1
     bne :+
     jmp crc
 
-    ; Calculate file seek offset of first BLOB (103 + 16 x BLOB count + 2)
+    ; Calculate file seek offset of first BLOB (= 103 + 16 x BLOB count + 2)
 :   lda blobs
     sta header_cur_addr
     lda blobs+1
@@ -87,7 +127,7 @@ HEADER_MAX_VER = 1
     
     clc
     lda header_cur_addr
-    adc #105
+    adc #105 ; Header fixed part 103 bytes + CRC-16 (2 bytes)
     sta header_cur_addr
     ldx #0
 :   lda header_cur_addr,x
@@ -113,11 +153,11 @@ loop:
 
     ; Check BLOB type
 :   lda header_blob_id
-    cmp #1
+    cmp #HEADER_BLOB_ROM
     beq set_rom
-    cmp #2
+    cmp #HEADER_BLOB_VERA
     beq set_vera
-    cmp #3
+    cmp #HEADER_BLOB_SMC
     beq set_smc
 
 next:
@@ -169,6 +209,7 @@ set_smc:
     bne :-
 
 inc_addr:
+    ; Calculate file seek offset of the next BLOB
     clc
     lda header_cur_addr
     adc header_blob_size
@@ -203,12 +244,7 @@ crc:
     jsr file_read
     bcs load_err
 
-setup_progress:
-    jsr progress_init
-
 exit:
-    lda #<header_rom_ver
-    lda #>header_rom_ver
     jmp file_close
 
 load_err:
@@ -231,8 +267,8 @@ cur_addr:
 ; Returns.............: Nothing
 ; Error...............: C=1 on error
 .proc header_run_prechecks
-    ; Check magic string
 t1: 
+    ; Check magic string
     ldx #0
 :   lda magic,x
     beq t2
@@ -246,13 +282,18 @@ t1:
     rts
 
 t2:
+    ; Check package file version
     lda header_ver
     cmp #HEADER_MIN_VER
     bcc t3
     cmp #HEADER_MAX_VER+1
     bcc t3
+    print 0, str1_header_unsupported
+    sec
+    rts
 
 t3:
+    ; Check header CRC-16
     lda header_crc1
     cmp header_crc2
     bne :+

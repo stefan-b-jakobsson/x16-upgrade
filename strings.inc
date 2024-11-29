@@ -44,6 +44,9 @@ str1_header_magic_err:
 str1_header_crc_err:
     .byt 13,"HEADER CRC-16 MISMATCH ERROR",0
 
+str1_header_unsupported:
+    .byt 13, "UNSUPPORTED PACKAGE FILE VERSION", 0
+
 
 ; Screen2: Upgrade summary
 
