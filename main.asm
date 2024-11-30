@@ -1,7 +1,7 @@
 
 ; cl65 -o TEST.PRG -u __EXEHDR__ -t cx16 -C cx16-asm.cfg main.asm
 
-.include "kernal.inc"
+.include "common.inc"
 .include "macro.inc"
 
 ;******************************************************************************
