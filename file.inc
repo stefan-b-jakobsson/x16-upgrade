@@ -1,6 +1,31 @@
-FILE_NUM = 1
-FILE_CMD1 = 15
-FILE_CMD2 = 16
+; Copyright (c) 2024, Stefan Jakobsson
+
+; Redistribution and use in source and binary forms, with or without 
+; modification, are permitted provided that the following conditions are met:
+
+; (1) Redistributions of source code must retain the above copyright notice, 
+;     this list of conditions and the following disclaimer. 
+;
+; (2) Redistributions in binary form must reproduce the above copyright notice,
+;     this list of conditions and the following disclaimer in the documentation
+;     and/or other materials provided with the distribution.
+
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+; ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+; LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+; CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+; SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+; INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+; CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+; POSSIBILITY OF SUCH DAMAGE.
+
+
+FILE_NUM = 1        ; For reading file content
+FILE_CMD1 = 15      ; For get file size command
+FILE_CMD2 = 16      ; For file seek command
 FILE_DEVICE = 8
 
 ;******************************************************************************
@@ -53,7 +78,7 @@ err:
 ;                       file offset
 ; Input...............: X/Y = Pointer to file name (LSB/MSB)
 ;                       A = File name length
-;                       r1-r2 = File seek offset
+;                       r1-r2 = File seek offset (32 bits)
 ; Returns.............: Nothing
 ; Error...............: C=1 on error
 .proc file_open_and_seek
@@ -61,7 +86,7 @@ err:
     jsr file_open
     bcs err
 
-    ; Prepare command
+    ; Prepare DOS position "P" command
     stz cmd+1   ; Channel
 
     ldx #4      ; p0-p3
@@ -70,31 +95,31 @@ err:
     dex
     bne :-
 
-    ; Send position command
+    ; Send DOS position command
     ldx #<cmd
     ldy #>cmd
     lda #6
     jsr SETNAM
     
     lda #FILE_CMD2
-    ldx #8
-    ldy #15
+    ldx #FILE_DEVICE
+    ldy #15 ; Command channel
     jsr SETLFS
     jsr OPEN
 
     ldx #FILE_CMD2
     jsr CHKIN
 
-    ; Get status
+    ; Read drive status
     ldx #$ff
 @1: inx
     jsr CHRIN
     cpx #2
     bcs @2
-    cmp #'0'
+    cmp #'0' ; An error occured if first two chars are not "00"
     bne err
-@2: cmp #13
-    bne @1
+@2: jsr READST
+    beq @1
     
     ; Set main file as input
     ldx #FILE_NUM
@@ -208,6 +233,7 @@ exit:
     rts
 
 callback:
+    ; Invoke callback function, pointer in r4, ignore if address is 0
     lda r4
     ora r4+1
     beq :+
@@ -224,7 +250,7 @@ status: .res 1
 
 ;******************************************************************************
 ; Function name.......: file_close
-; Purpose.............: Closes the file
+; Purpose.............: Closes all file handles
 ; Input...............: Nothing
 ; Returns.............: Nothing
 .proc file_close
@@ -243,38 +269,44 @@ status: .res 1
 ; Purpose.............: Returns the size of the currently open file
 ; Input...............: Nothing
 ; Returns.............: X/Y/A = File size (24 bits, low, mid, high)
+; Error...............: C=1 on error
 .proc file_get_size
+    ; Prepare DOS tell "T" command
     ldx #<cmd
     ldy #>cmd
     lda #2
     jsr SETNAM
     
+    ; Send DOS tell command
     lda #FILE_CMD1
-    ldx #8
-    ldy #15
+    ldx #FILE_DEVICE
+    ldy #15 ; Command channel
     jsr SETLFS
     jsr OPEN
 
+    ; Set as input
     ldx #FILE_CMD1
     jsr CHKIN
 
     stz index
-
 loop:
-    jsr CHRIN
+    jsr CHRIN ; Read char
     pha
     
-    jsr READST
+    jsr READST ; Check if done
     bne eol
     
-    pla
+    pla ; Get char from stack
 
     ldx index
+    
+    ; Store response code, 2 chars
     cpx #2
     bcs :+
     sta code,x
 
-:   cpx #12
+:   ; Store file size hex string value at byte index 12..19
+    cpx #12 
     bcc next
     cpx #20
     bcs next
@@ -285,11 +317,22 @@ next:
     bra loop
 
 eol:
+    ; Get last char from stack
     pla
     
-    ldx #1
+    ; Set main file as input
+    ldx #FILE_NUM
     jsr CHKIN 
 
+    ; Check response code
+    lda code
+    cmp #'0'
+    bne err
+    lda code+1
+    cmp #'7'
+    bne err
+
+    ; Set return values
     ldx #<size
     ldy #>size
     jsr util_hex2bin
@@ -297,6 +340,11 @@ eol:
     ldy r5+1
     lda r5+2
 
+    clc
+    rts
+
+err:
+    sec
     rts
 
 cmd:
