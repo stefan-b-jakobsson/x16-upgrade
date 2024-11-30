@@ -36,10 +36,12 @@ SETNAM = $ffbd
 SETLFS = $ffba
 OPEN = $ffc0
 CHKIN = $ffc6
-MACPTR = $ff44  
+MACPTR = $ff44
 READST = $ffb7
 CLOSE = $ffc3
 CLRCHN = $ffcc
+
+ENTER_BASIC = $ff47
 
 ; Math functions (ROM bank 4)
 MOVFM = $fe63 
