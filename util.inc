@@ -1,13 +1,40 @@
+; Copyright (c) 2024, Stefan Jakobsson
+
+; Redistribution and use in source and binary forms, with or without 
+; modification, are permitted provided that the following conditions are met:
+
+; (1) Redistributions of source code must retain the above copyright notice, 
+;     this list of conditions and the following disclaimer. 
+;
+; (2) Redistributions in binary form must reproduce the above copyright notice,
+;     this list of conditions and the following disclaimer in the documentation
+;     and/or other materials provided with the distribution.
+
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+; ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+; LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+; CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+; SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+; INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+; CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+; POSSIBILITY OF SUCH DAMAGE.
+
+
 ;******************************************************************************
 ; Function name.......: util_init
 ; Purpose.............: Inits util functions
 ; Input...............: Nothing
 ; Returns.............: Nothing
 .proc util_init
+    ; Get screen dimensions
     jsr SCREEN
     stx screen_width
     sty screen_height
 
+    ; Set VERA address to top left corner
     stz VERA_ADDR0
     lda #$b0
     sta VERA_ADDR1
@@ -540,15 +567,6 @@ loop:
     rts
 
 counter: .res 1
-.endproc
-
-
-;******************************************************************************
-; Function name.......: util_keyboard_get
-; Purpose.............: Waits for and returns one keypress
-; Input...............: Nothing
-; Returns.............: A = key
-.proc util_keyboard_get
 .endproc
 
 ;******************************************************************************
