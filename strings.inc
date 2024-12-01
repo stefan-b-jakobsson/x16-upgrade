@@ -89,6 +89,9 @@ str2_pkg_components:
 str2_rom:
     .byt "ROM.: ", 0
 
+str2_custom_rom:
+    .byt "Custom build",0
+
 str2_vera:
     .byt "VERA: ", 0
 

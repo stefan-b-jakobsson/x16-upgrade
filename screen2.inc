@@ -83,7 +83,7 @@
     cmp #ROM_STATUS_UNSELECTED
     bne :+
     print 0, str2_skip ; Not selected for upgrade
-    bra :+++
+    bra :++++
 
 :   lda header_rom_ver
     bmi :+
@@ -92,22 +92,29 @@
     jsr CHROUT
     lda header_rom_ver
     jsr util_print_num
-    bra :++
+    bra :+++
 
-:   lda #'P' ; Pre-release
+:   cmp #$ff
+    beq :+
+
+    lda #'P' ; Pre-release
     jsr CHROUT
     lda #'R'
     jsr CHROUT
     lda header_rom_ver
-    ora #$ff
-    dec
+    eor #$ff
+    inc
     jsr util_print_num
+    bra :++
+
+:   print 0, str2_custom_rom
 
 :   lda #13
     jsr CHROUT
+    bra :+
 
     ; Print VERA version
-    print 0, str2_vera
+:   print 0, str2_vera
     lda vera_status
     bne :+
     print 0, str2_skip ; Not selected for upgrade

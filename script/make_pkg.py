@@ -147,7 +147,10 @@ header.append(0)
 # BLOB entry 1: Kernal ROM
 header.append(BLOBTYPE_X16_ROM)             # Type
 
-header.append(rom_version)                  # ROM version
+if rom_version > 0:                         # ROM version
+    header.append(rom_version)
+else:
+    header.append(((-rom_version)^0xff)+1)
 header.append(0)
 header.append(0)
 
