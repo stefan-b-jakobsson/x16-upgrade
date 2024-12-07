@@ -38,8 +38,8 @@
 
     ; Run pre-upgrade checks
     jsr rom_run_prechecks
-    jsr vera_run_prechecks
     jsr smc_run_prechecks
+    jsr vera_run_prechecks
 
     ; Add Back button (index 0)
     lda #13

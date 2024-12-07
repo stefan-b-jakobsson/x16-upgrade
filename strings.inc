@@ -26,26 +26,11 @@
 str_header: 
     .byt 147, "X16 UPGRADE", 13, 13, 0
 
-str_ok:
-    .byt "OK", 0
-
 str_ok_cr:
     .byt "OK", 13, 0
 
-str_pass:
-    .byt "PASS", 0
-
-str_pass_cr:
-    .byt "PASS", 13, 0
-
-str_fail:
-    .byt "FAIL", 0
-
 str_fail_cr:
     .byt "FAIL", 13, 0
-
-str_warn:
-    .byt "WARN", 0
 
 str_warn_cr:
     .byt "WARN", 13, 0
@@ -155,12 +140,6 @@ str4_rom_chip_id:
 str4_rom_progress:
     .byt "Loading... 0%", 0
 
-str4_vera:
-    .byt "VERA", 13, 0
-
-str4_vera_nys:
-    .byt "ERR:Not yet supported", 13,0
-
 str4_smc:
     .byt "SMC", 13, 0
 
@@ -195,7 +174,20 @@ str4_smc_unknown_bootloader:
     .byt "Unknown version", 13, 0
 
 str4_smc_loading:
-    .byt "Loading 0%",0
+    .byt "Loading... 0%",0
+
+str4_vera:
+    .byt "VERA", 13, 0
+
+str4_vera_loading:
+    .byt "Loading... 0%", 0
+
+str4_vera_close_jp1:
+    .byt "Ensure JP1 on the VERA is closed", 13
+    .byt "Press any key to continue", 13, 0
+
+str4_vera_chip_ok:
+    .byt "Chip ID... OK", 13, 0
 
 str4_btn_back:
     .byt "<Back>"
@@ -211,17 +203,37 @@ str4_btn_next_end:
 str5_header:
     .byt "INSTALLING UPGRADES", 13, 13, 0
 
+str5_vera_header:
+    .byt "VERA", 13, 0
+
+str5_vera_close_jp1:
+    .byt "Ensure JP1 on the VERA is closed", 13
+    .byt "Press any key to continue", 13, 0
+
+str5_vera_erase:
+    .byt "Erasing...", 0
+
+str5_vera_write:
+    .byt "Writing... 0%", 0
+
+str5_vera_verify:
+    .byt "Verifying... 0%", 0
+
+str5_vera_open_jp1:
+    .byt "Ensure JP1 on the VERA is open", 13
+    .byt "Press any key to continue", 13, 0
+
 str5_rom_header:
-    .byt "ROM",13, 0
+    .byt "ROM", 13, 0
 
 str5_rom_erase:
     .byt "Erasing...", 0
 
 str5_rom_write:
-    .byt "Writing 0%", 0
+    .byt "Writing... 0%", 0
 
 str5_rom_verify:
-    .byt "Verifying 0%", 0
+    .byt "Verifying... 0%", 0
 
 str5_smc_header:
     .byt "SMC",13,0
@@ -233,10 +245,10 @@ str5_smc_start_bootloader:
     .byt "Press Power+Reset at the same time ", 0
 
 str5_smc_write:
-    .byt "Writing 0%", 0
+    .byt "Writing... 0%", 0
 
 str5_smc_verify:
-    .byt "Verifying 0%", 0
+    .byt "Verifying... 0%", 0
 
 str5_smc_update_failed:
     .byt "Update failed. Last err no: ", 0
@@ -250,6 +262,7 @@ str5_smc_bad_bootloader:
     .byt "Finish the update by grounding SMC reset "
     .byt "pin (#10). Check the README file before "
     .byt "you proceed.", 0
+
 
 ; Screen 6: Warning
 

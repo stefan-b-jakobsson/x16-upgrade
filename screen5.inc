@@ -37,7 +37,8 @@
     print 0, str5_header
 
     ; Update VERA
-    ; TODO: Not yet implemented
+    jsr vera_update
+    jsr vera_verify
 
     ; Update Kernal ROM
     jsr rom_update
