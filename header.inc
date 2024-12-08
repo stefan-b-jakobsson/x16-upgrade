@@ -260,7 +260,31 @@ crc:
     bcs load_err
 
 exit:
-    jmp file_close
+    ; Unselect ROM if size is 0
+    lda header_rom_size
+    ora header_rom_size+1
+    ora header_rom_size+2
+    bne :+
+    lda #ROM_STATUS_UNSELECTED
+    sta rom_status
+
+    ; Unselect VERA if size is 0
+:   lda header_vera_size
+    ora header_vera_size+1
+    ora header_vera_size+2
+    bne :+
+    lda #VERA_STATUS_UNSELECTED
+    sta vera_status
+
+    ; Unselect SMC if size is 0
+:   lda header_smc_size
+    ora header_smc_size+1
+    ora header_smc_size+2
+    bne :+
+    lda #SMC_STATUS_UNSELECTED
+    sta smc_status
+
+:   jmp file_close
 
 load_err:
     jsr file_close
