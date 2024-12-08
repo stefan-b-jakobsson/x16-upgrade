@@ -106,3 +106,45 @@ is found here.
 |---------------------------|----------------------------------------------------------------|
 | Load error                | Try to restart the program.                                    |
 | Close JP1                 | When prompted, JP1 on the VERA must be closed                  |
+
+
+## Install Updates
+
+### VERA
+
+| Issue                     | Solution                                                       |
+|---------------------------|----------------------------------------------------------------|
+| Close JP1                 | JP1 on the VERA was closed during the pre-upgrade checks. Ensure it is still closed. |
+| Verify error              | Follow procedure described below. |
+
+The program exits if the VERA update fails. Next time you reset or power cycle the system, the
+VERA will configure its FPGA from the corrupted firmware that is stored on flash memory, and the
+system will most likely not work.
+
+Try to install the VERA firmware without resetting or power cycling the system.
+
+Instructions on how to recover a VERA board using an external programmer is found here.
+
+
+### ROM
+
+| Issue                     | Solution                                                       |
+|---------------------------|----------------------------------------------------------------|
+| Verify error              | Follow the procedure described below.                          |
+
+If the Kernal ROM update fails you must recover it with an external programmer. Instructions on how to do that are found here.
+
+
+
+### SMC
+
+| Issue                     | Solution                                                       |
+|---------------------------|----------------------------------------------------------------|
+| Press Power+Reset         | To start the bootloader update procedure you must momentarily press Power+Reset at the same time before the 20 second countdown finishes. |
+| Verify error              | Follow the procedure described below. |
+
+If the SMC update fails, you can do a recovery update if you have bootloader version 3. Instructions
+about that procedure are found here.
+
+If that is not an option, you need to recover the SMC using an external programmer, as described here.
+
