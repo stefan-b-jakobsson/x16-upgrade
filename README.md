@@ -118,12 +118,12 @@ is found here.
 | Verify error              | Follow procedure described below. |
 
 The program exits if the VERA update fails. Next time you reset or power cycle the system, the
-VERA will configure its FPGA from the corrupted firmware that is stored on flash memory, and the
+VERA will configure its FPGA from the corrupted firmware that is stored in flash memory, and the
 system will most likely not work.
 
-Try to install the VERA firmware without resetting or power cycling the system.
+Try to install the VERA firmware again without resetting or power cycling the system.
 
-Instructions on how to recover a VERA board using an external programmer is found here.
+Instructions on how to recover a VERA board using an external programmer are found here.
 
 
 ### ROM
@@ -144,7 +144,7 @@ If the Kernal ROM update fails you must recover it with an external programmer. 
 | Verify error              | Follow the procedure described below. |
 
 If the SMC update fails, you can do a recovery update if you have bootloader version 3. Instructions
-about that procedure are found here.
+on that procedure are found here.
 
 If that is not an option, you need to recover the SMC using an external programmer, as described here.
 
