@@ -57,8 +57,9 @@
     lda #5
     jsr util_countdown
 
-    sec ; cold start
-    jmp ENTER_BASIC
+    ; Jump to reset vector
+    stz ROM_SEL
+    jmp ($fffc)
 
 rstmsg:
     .byt 13, "Reset... ", 0
