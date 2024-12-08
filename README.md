@@ -4,7 +4,7 @@
 
 ## Introduction
 
-The purpose of this program is to the three major firmware components of the Command X16:
+The purpose of this program is to update the three major firmware components of the Command X16:
 
 - Kernal ROM
 - VERA
@@ -21,12 +21,12 @@ upgrade process.
 
 You interact with the program through widgets, such as buttons and checkboxes.
 
-The active widget is highlighted. You move between widget with Tab, Shift+Tab, Left Cursor,
+The active widget is highlighted. You move between widgets with Tab/right cursor and Shift+Tab/left cursor,
 and Right Cursor. The active widget's action is performed when you press Return.
 
 ## Choose Package File
 
-At the first screen of the program, the user is prompted to enter the name of a package file.
+At the first screen, the user is prompted to enter the name of a package file.
 
 A package file contains all three firmware components.
 
@@ -48,7 +48,7 @@ Then follows a list of firmware components to be installed including the new
 version numbers.
 
 The program by default selects all three components to be installed. You may
-press the Custom button to select which components to install. A custom install requires that you
+press the Custom button to change that. A custom install requires that you
 verify yourself that the components to be installed are compatible with the components that
 are not updated.
 
@@ -63,7 +63,7 @@ The pre-upgrade checks described below are run before beginning to install
 any new firmware. The purpose of the pre-upgrade checks is to verify that it
 will be possible to install all the selected components.
 
-It is not possible to proceed the update if any of the pre-upgrade checks fail.
+It is not possible to proceed with the update if any of the pre-upgrade checks fail.
 
 ### Kernal ROM
 
@@ -80,7 +80,7 @@ It is not possible to proceed the update if any of the pre-upgrade checks fail.
 |---------------------------|----------------------------------------------------------------|
 | Firmware unsupported      | Use external programmer if the firmware is less than 43.0.0.   |
 | Write-enabled error       | Use external programmer to set the SMC fuses                   |
-| Bootlader not found       | Use external programmer to install a bootloader.               |
+| Bootloader not found      | Use external programmer to install a bootloader.               |
 | Bootloader unsupported    | Check if there is a newer version of X16UPGRADE.               |
 | Bad bootloader, confirmed | Prepare to follow the update procedure for the bad bootloader. |
 | Bad bootloader, high risk | Prepare to follow the update procedure for the bad bootloader. |
