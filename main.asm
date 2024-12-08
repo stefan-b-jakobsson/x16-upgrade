@@ -50,6 +50,7 @@
     jsr util_init
 
     ; Init
+    jsr header_init
     jsr rom_init
     jsr vera_init
     jsr smc_init

@@ -31,6 +31,21 @@ HEADER_BLOB_VERA = 2
 HEADER_BLOB_SMC = 3
 
 ;******************************************************************************
+; Function name.......: header_init
+; Purpose.............: Set header default values
+; Input...............: Nothing
+; Returns.............: Nothing
+.proc header_init
+    ldx #header_smc_start-header_rom_ver+3
+    lda #0
+:   sta header_rom_ver-1,x
+    dex
+    bne :-
+
+    rts
+.endproc
+
+;******************************************************************************
 ; Function name.......: header_fetch
 ; Purpose.............: Reads package header from file; also gets the total
 ;                       file size
