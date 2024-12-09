@@ -22,6 +22,12 @@
 ; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ; POSSIBILITY OF SUCH DAMAGE.
 
+; Credits to MooingLemur who wrote the flashvera utility,
+; https://github.com/mooinglemur/flashvera.
+;
+; The communication with the VERA's memory flash chip over
+; SPI is inspired by MooingLemur's code.
+
 
 ; VERA update status values
 VERA_STATUS_UNSELECTED = 0
