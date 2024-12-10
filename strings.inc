@@ -255,7 +255,7 @@ str5_smc_update_failed:
     .byt "Update failed. Last err no: ", 0
 
 str5_smc_reset:
-    .byt "System reset... ", 0
+    .byt "System shutdown... ", 0
 
 str5_smc_bad_bootloader:
     .byt "Corrupted (bad) bootloader v2 detected. "
