@@ -184,7 +184,7 @@ str4_vera_loading:
     .byt "Loading... 0%", 0
 
 str4_vera_close_jp1:
-    .byt "Ensure JP1 on the VERA is closed", 13
+    .byt "Close JP1 on the VERA board", 13
     .byt "Press any key to continue", 13, 0
 
 str4_vera_chip_ok:
@@ -202,13 +202,13 @@ str4_btn_next_end:
 ; Screen5: Install
 
 str5_header:
-    .byt "INSTALLING UPGRADES", 13, 13, 0
+    .byt "INSTALLING UPDATES", 13, 13, 0
 
 str5_vera_header:
     .byt "VERA", 13, 0
 
 str5_vera_close_jp1:
-    .byt "Ensure JP1 on the VERA is closed", 13
+    .byt "Close JP1 on the VERA board", 13
     .byt "Press any key to continue", 13, 0
 
 str5_vera_erase:
@@ -221,7 +221,7 @@ str5_vera_verify:
     .byt "Verifying... 0%", 0
 
 str5_vera_open_jp1:
-    .byt "Ensure JP1 on the VERA is open", 13
+    .byt "Open JP1 on the VERA board", 13
     .byt "Press any key to continue", 13, 0
 
 str5_rom_header:
@@ -243,7 +243,8 @@ str5_smc_wait_key:
     .byt "Press any key...",13,0
 
 str5_smc_start_bootloader:
-    .byt "Press Power+Reset at the same time ", 0
+    .byt "Momentarily press Power+Reset", 13
+    .byt "at the same time... ", 0
 
 str5_smc_write:
     .byt "Writing... 0%", 0
