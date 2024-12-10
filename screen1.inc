@@ -37,14 +37,9 @@
 
     ; Get file name
     print 0, str1_file_prompt
-    
-    lda VERA_ADDR0
-    lsr
-    tay
+
     sec
-    lda VERA_ADDR1
-    sbc #$b0
-    tax
+    jsr PLOT
     clc
     jsr $fff0   ; Real PLOT
 
@@ -57,6 +52,12 @@
     bra :-
 :   iny
     sta file_name_len
+
+    jsr util_init
+    sec
+    jsr $fff0
+    clc
+    jsr PLOT
     
     ; Fetch file header and check integrity
     jsr header_fetch
