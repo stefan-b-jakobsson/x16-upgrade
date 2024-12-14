@@ -36,8 +36,6 @@
     jsr screen_header
     print 0, str5_header
 
-    bra fail_vera
-
     ; Update VERA
 install_vera:
     jsr vera_update
