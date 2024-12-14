@@ -34,7 +34,7 @@ def rom_get_file():
         rom_path.set(dialog)
         rom_update_version()
 
-def rom_update_version(self):
+def rom_update_version(self=0):
     try:
         ver = x16pkg.get_rom_version(txtROM.get())
         if ver < 128:
