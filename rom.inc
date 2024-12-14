@@ -460,9 +460,9 @@ count: .res 3
     bcs err
 
     ; Load file
-    lda #$00
+    lda #<ROM_BUF
     sta r1
-    lda #$7f
+    lda #>ROM_BUF
     sta r1+1
     lda header_rom_size
     sta r2

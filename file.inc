@@ -142,8 +142,6 @@ cmd:
 ; Function name.......: file_read
 ; Purpose.............: Reads the specified number of bytes into memory from 
 ;                       the currently open file.
-;                       The target address is not incremented if it is 
-;                       within the I/O area ($9F00-$9FFF).
 ;                       If the target address overflows into the I/O area, it
 ;                       automatically continues from $01:$A000.
 ;                       If the target address overflows into the ROM area, it
@@ -164,62 +162,91 @@ cmd:
     ora count+2
     bne :+
     jsr callback
-    bra exit
+    jmp exit
 
-    ; Read byte
-:   jsr CHRIN
-    sta tmp
-    
+    ; Special case: Target address within range of I/O area, ensure we don't overflow into that
+:   lda r1+1
+    cmp #$9e
+    bne :+
+    sec
+    lda #0
+    sbc r1
+    cmp #128
+    bcc :+++
+
+    ; Read max 128 bytes
+:   lda count+1
+    ora count+2
+    bne :+
+    lda count
+    cmp #129
+    bcc :++
+:   lda #128
+:   ldx r1
+    ldy r1+1
+    clc
+    jsr MACPTR
+
+    ; Check errors
     jsr READST
     sta status
     and #%10000010
     bne err
 
-    ; Save byte
-    lda tmp
-    sta (r1)
+    ; Store number of bytes actually read
+    stx batch_read
 
     ; Update CRC
+    ldy #0
+:   lda (r1),y
     jsr crc16_update
-    
-    ; Increment target address (if applicable)
-    lda r1+1            ; Don't increment if target within I/O area
-    cmp #$9f
-    beq dec_counter
+    iny
+    cpy batch_read
+    bne :-
 
-    inc r1              ; Increment LSB
-    bne dec_counter
-    inc r1+1            ; Increment MSB
-    
-    lda r1+1            ; On overflow into I/O area, set address to 01:A000
+    ; Decrement byte count
+    sec
+    lda count
+    sbc batch_read
+    sta count
+    lda count+1
+    sbc #0
+    sta count+1
+    lda count+2
+    sbc #0
+    sta count+2
+
+    ; Increment target address
+    clc
+    lda batch_read
+    adc r1
+    sta r1
+    lda r1+1
+    adc #0
+    sta r1+1
+
+    ; Check target address overflow
+    lda r1+1
     cmp #$9f
     bne :+
     lda #$a0
     sta r1+1
     lda #1
     sta RAM_SEL
-    bra dec_counter
+    bra :++
 
-:   cmp #$c0            ; On overflow into ROM area, set address to start of next RAM bank
-    bne dec_counter
-    inc RAM_SEL
+:   cmp #$c0
+    bne :+
     lda #$a0
     sta r1+1
 
-dec_counter:
-    lda count
-    bne :++
-    lda count+1
-    bne :+
-    dec count+2
-:   dec count+1
-    jsr callback    ; Callback every time bits 8..15 are decremented
-:   dec count
+:   jsr callback
 
 check_eof:
     lda status
     and #%01000001
-    beq file_read
+    bne exit
+    jmp file_read
 
 exit:
     ; Return with error if not all requested bytes available
@@ -246,6 +273,7 @@ err:
 
 tmp: .res 1
 status: .res 1
+batch_read: .res 1
 .endproc
 
 ;******************************************************************************
