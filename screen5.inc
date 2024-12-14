@@ -36,21 +36,32 @@
     jsr screen_header
     print 0, str5_header
 
+    bra fail_vera
+
     ; Update VERA
+install_vera:
     jsr vera_update
+    bcs fail_vera
     jsr vera_verify
+    bcs fail_vera
 
     ; Update Kernal ROM
+install_rom:
     jsr rom_update
+    bcs fail_rom
     jsr rom_verify
+    bcs fail_rom
 
     ; Update SMC
+install_smc:
     jsr smc_update
+    bcs fail_smc
     jsr smc_verify
+    bcs fail_smc
     jsr smc_reboot
 
-    ; Kernal cold start
-    print 0, rstmsg
+    ; Reset computer after countdown
+    print 0, str5_reset_msg
 
     ldx #0 ; 5 second countdown
     ldy #0
@@ -61,7 +72,17 @@
     stz ROM_SEL
     jmp ($fffc)
 
-rstmsg:
-    .byt 13, "Reset... ", 0
+fail_vera:
+    print 1, str5_vera_failed
+    rts
+
+fail_rom:
+    print 1, str5_rom_failed
+:   bra :-
+
+fail_smc:
+    print 1, str5_smc_failed
+:   bra :-
+
 .endproc
 

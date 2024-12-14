@@ -265,6 +265,18 @@ str5_smc_bad_bootloader:
     .byt "pin (#10). Check the README file before "
     .byt "you proceed.", 0
 
+str5_reset_msg:
+    .byt "System reset... ", 0
+
+str5_vera_failed:
+    .byt "The VERA update failed. The video output will probably not work if you reset or power cycle the computer. Try to update the VERA again.", 13, 0
+
+str5_rom_failed:
+    .byt "The ROM update failed. The chip must probably be restored with an external programmer.", 0
+
+str5_smc_failed:
+    .byt "The SMC update failed. If you have bootloader v3, it might be possible to do a recovery update of the SMC. Otherwise it must probably be restored with an external programmer.", 0
+
 
 ; Screen 6: Warning
 
