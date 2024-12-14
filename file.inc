@@ -186,6 +186,7 @@ cmd:
     ldy r1+1
     clc
     jsr MACPTR
+    bcs err
 
     ; Check errors
     jsr READST
