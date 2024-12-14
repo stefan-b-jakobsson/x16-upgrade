@@ -32,15 +32,19 @@ def rom_get_file():
     if dialog:
         # Set path
         rom_path.set(dialog)
+        rom_update_version()
 
-        # Fetch version from file
-        ver = x16pkg.get_rom_version(dialog)
+def rom_update_version(self):
+    try:
+        ver = x16pkg.get_rom_version(txtROM.get())
         if ver < 128:
             rom_ver.set("R" + str(ver))
         elif ver != 255:
             rom_ver.set("R" + str((ver^0xff)+1) + " (Pre-release)")
         else:
-            rom_ver_set("Custom build")
+            rom_ver.set("Custom build")
+    except:
+        rom_ver.set("")
 
 def vera_get_file():
     dialog = fd.askopenfilename(filetypes=[(".bin files", "*.bin")])
@@ -148,6 +152,7 @@ lblROM.grid(row=3, column=0, sticky="w", padx="10")
 
 txtROM = tk.Entry(window, textvariable=rom_path)
 txtROM.grid(row=3, column=1, sticky="we")
+txtROM.bind('<FocusOut>', rom_update_version)
 
 btnROM = tk.Button(window, text="...", command=rom_get_file)
 btnROM.grid(row=3, column=2)
