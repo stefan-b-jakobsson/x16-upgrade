@@ -168,7 +168,7 @@ fail:
     beq :+
 
     ; Otherwise abort
-    sec
+    clc
     rts
 
     ; Print header
@@ -313,7 +313,7 @@ attempts: .res 1
     lda rom_status
     cmp #ROM_STATUS_UPDATE_PASS
     beq :+
-    sec
+    clc
     rts
 
     ; Print header

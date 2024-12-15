@@ -107,6 +107,7 @@ SMC_RAM_BUF = $6100
     lda smc_status
     cmp #SMC_STATUS_UNSELECTED
     bne :+
+    clc
     rts
 
     ; Select SMC progress meter
@@ -285,17 +286,17 @@ fail:
 ; Input...............: Nothing
 ; Returns.............: C=1 on error
 .proc smc_update
-    ; Disable interrupts
-    sei
-
     ; Abort if status is not SMC_STATUS_LOAD_PASS
     lda smc_status
     cmp #SMC_STATUS_LOAD_PASS
     beq :+
-    sec
+    clc
     rts
 
-:   ; Print header
+:   ; Disable interrupts
+    sei
+    
+    ; Print header
     print 0, str5_smc_header
 
 wait_key:
