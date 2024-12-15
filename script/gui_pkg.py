@@ -135,6 +135,7 @@ lblDescription.grid(row=0, column=0, sticky="w")
 
 txtDescription = tk.Entry(window)
 txtDescription.grid(row=0, column=1, sticky="we")
+txtDescription.focus()
 
 # Created by
 lblCreatedBy = tk.Label(window, text="Created by")
