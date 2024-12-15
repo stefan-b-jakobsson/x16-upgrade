@@ -35,9 +35,10 @@
     jsr screen_header
     print 0, str1_welcome
 
-    ; Get file name
+    ; Prompt for file name
     print 0, str1_file_prompt
 
+    ; Get file name
     sec
     jsr PLOT
     clc
@@ -45,13 +46,12 @@
 
     ldy #0
 :   jsr CHRIN
-    cmp #13
-    beq :+
     sta file_name,y
     iny
-    bra :-
-:   iny
-    sta file_name_len
+    cmp #13
+    bne :-
+    dey
+    sty file_name_len
 
     jsr util_init
     sec
