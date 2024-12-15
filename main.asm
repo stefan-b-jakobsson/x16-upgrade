@@ -80,6 +80,8 @@
 ;******************************************************************************
 ; Include files
 
+.include "version.inc"
+
 .include "util.inc"
 
 .include "header.inc"

@@ -29,6 +29,11 @@
 ; Returns.............: Nothing
 .proc screen_header
     print 0,str_header
+    jsr version_print
+    lda #13
+    jsr CHROUT
+    jsr CHROUT
+
     ldx #0
     ldy #0
     lda #224

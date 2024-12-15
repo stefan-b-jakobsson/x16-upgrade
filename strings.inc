@@ -24,7 +24,7 @@
 
 ; Header
 str_header: 
-    .byt 147, "X16 UPGRADE", 13, 13, 0
+    .byt 147, "X16 UPGRADE ", 0
 
 str_ok_cr:
     .byt "OK", 13, 0
