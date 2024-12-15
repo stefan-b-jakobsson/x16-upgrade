@@ -114,7 +114,7 @@ def btnCreate_click():
 window = tk.Tk()
 window.title("Create X16 package file")
 window.eval('tk::PlaceWindow . center')
-window.minsize(500,400)
+window.minsize(600,300)
 
 window.columnconfigure(0, weight=1)
 window.columnconfigure(1, weight=50)
@@ -131,77 +131,74 @@ smc_ver = tk.StringVar()
 
 # Description
 lblDescription = tk.Label(window, text="Package description")
-lblDescription.grid(row=0, column=0, sticky="w")
+lblDescription.grid(row=0, column=0, padx=(15,0), pady=(15,0), sticky="w")
 
 txtDescription = tk.Entry(window)
-txtDescription.grid(row=0, column=1, sticky="we")
+txtDescription.grid(row=0, column=1, pady=(15,0), sticky="we")
 txtDescription.focus()
 
 # Created by
 lblCreatedBy = tk.Label(window, text="Created by")
-lblCreatedBy.grid(row=1, column=0, sticky="w")
+lblCreatedBy.grid(row=1, column=0, padx=(15,0), sticky="w")
 
 txtCreatedBy = tk.Entry(window)
 txtCreatedBy.grid(row=1, column=1, sticky="we")
 
 # Files
 lblFiles = tk.Label(window, text="Files:")
-lblFiles.grid(row=2, column=0, sticky="w")
+lblFiles.grid(row=2, column=0, padx=(15,0), sticky="w")
 
 lblROM = tk.Label(window, text="ROM")
-lblROM.grid(row=3, column=0, sticky="w", padx="10")
+lblROM.grid(row=3, column=0, sticky="w", padx=(30,0))
 
 txtROM = tk.Entry(window, textvariable=rom_path)
 txtROM.grid(row=3, column=1, sticky="we")
 txtROM.bind('<FocusOut>', rom_update_version)
 
 btnROM = tk.Button(window, text="...", command=rom_get_file)
-btnROM.grid(row=3, column=2)
+btnROM.grid(row=3, column=2, padx=(0,15))
 
 lblVERA = tk.Label(window, text="VERA")
-lblVERA.grid(row=4, column=0, sticky="w", padx="10")
+lblVERA.grid(row=4, column=0, sticky="w", padx=(30,0))
 
 txtVERA = tk.Entry(window, textvariable=vera_path)
 txtVERA.grid(row=4, column=1, sticky="we")
 
 btnVERA = tk.Button(window, text="...", command=vera_get_file)
-btnVERA.grid(row=4, column=2)
+btnVERA.grid(row=4, column=2, padx=(0,15))
 
 lblSMC = tk.Label(window, text="SMC")
-lblSMC.grid(row=5, column=0, sticky="w", padx="10")
+lblSMC.grid(row=5, column=0, sticky="w", padx=(30,0))
 
 txtSMC = tk.Entry(window, textvariable=smc_path)
 txtSMC.grid(row=5, column=1, sticky="we")
 
 btnSMC = tk.Button(window, text="...", command=smc_get_file)
-btnSMC.grid(row=5, column=2)
+btnSMC.grid(row=5, column=2, padx=(0,15))
 
 # Firmware versions
 
 lblFiles = tk.Label(window, text="Firmware versions:")
-lblFiles.grid(row=6, column=0, columnspan=2, sticky="w")
+lblFiles.grid(row=6, column=0, columnspan=2, sticky="w", padx=(15,0))
 
 lblROMver = tk.Label(window, text="ROM")
-lblROMver.grid(row=7, column=0, sticky="w", padx="10")
+lblROMver.grid(row=7, column=0, sticky="w", padx=(30,0))
 
 txtROMver = tk.Entry(window, textvariable=rom_ver)
 txtROMver.grid(row=7, column=1, sticky="we")
 txtROMver.config(state=tk.DISABLED)
 
 lblVERAver = tk.Label(window, text="VERA")
-lblVERAver.grid(row=8, column=0, sticky="w", padx="10")
+lblVERAver.grid(row=8, column=0, sticky="w", padx=(30,0))
 
 txtVERAver = tk.Entry(window, textvariable=vera_ver)
 txtVERAver.grid(row=8, column=1, sticky="we")
 
 lblSMC = tk.Label(window, text="SMC")
-lblSMC.grid(row=9, column=0, sticky="w", padx="10")
+lblSMC.grid(row=9, column=0, sticky="w", padx=(30,0))
 
 txtSMC = tk.Entry(window, textvariable=smc_ver)
 txtSMC.grid(row=9, column=1, sticky="we")
-
-lblFiller = tk.Label(window)
-lblFiller.grid(row=10,column=0)
 
 # Buttons
 
@@ -213,7 +210,7 @@ btnCancel.pack(side=tk.LEFT)
 btnCreate = tk.Button(frame, text="Create Package", command=btnCreate_click)
 btnCreate.pack(side=tk.RIGHT)
 
-frame.grid(row=11, column=0, columnspan=3, sticky="we", padx=20, pady=20)
+frame.grid(row=10, column=0, columnspan=3, sticky="we", padx=15, pady=30)
 
 # Enter window main loop
 
