@@ -103,7 +103,7 @@ checks.
 | Bad bootloader, confirmed | Prepare to follow the update procedure for the bad bootloader.                |
 | Bad bootloader, high risk | Prepare to follow the update procedure for the bad bootloader.                |
 | Bad bootloader, low risk  | Prepare to follow the update procedure for the bad bootloader.                |
-| Bootloader, unkown        | An unknown version of the bootloader is installed, proceed at your own risk.  |
+| Bootloader, unknown       | An unknown version of the bootloader is installed, proceed at your own risk.  |
 | Load error                | Try to restart the program.                                                   |
 
 Updating the SMC with an external programmer requires that the SMC chip is removed from
@@ -166,7 +166,7 @@ rom.bin file to the chip. The rom.bin file is found on the [Github release page]
 | Verify error              | Follow the procedure described below. |
 
 If the SMC update fails, you can do a recovery update if you have bootloader version 3. Instructions
-on that procedure are found here.
+on that procedure are found [here](https://github.com/X16Community/x16-smc/blob/main/doc/update-guide.md#in-system-recovery-with-bootloader-v3).
 
 If that is not an option, you need to recover the SMC using an external programmer, as described [here](https://github.com/X16Community/x16-smc/blob/main/doc/update-guide.md#external-programmer).
 
