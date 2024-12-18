@@ -26,6 +26,7 @@ import os
 import tkinter as tk
 from tkinter import filedialog as fd
 import x16pkg
+import re
 
 def rom_get_file():
     dialog = fd.askopenfilename(filetypes=[(".bin files", "*.bin")])
@@ -71,6 +72,67 @@ def smc_version_array():
         return [int(a[0]), int(a[1]), int(a[2])]
     except:
         return False
+def btnLatest_click():
+    # Prompt user to select output folder
+    output_dir = fd.askdirectory(message="Select output folder", title="Select output folder", initialdir=os.path.dirname, mustexist=False)
+    if output_dir == "":
+        return
+    
+    # Download latest Kernal ROM
+    try:
+        rom_version = x16pkg.github_fetch_latest("X16Community", "x16-rom", "rom.bin$", os.path.join(output_dir, "rom.bin"))
+    except:
+        rom_version = None
+
+    if rom_version != None:
+        rom_path.set(os.path.join(output_dir, "rom.bin"))
+        rom_update_version()
+    else:
+        rom_path.set("")
+        rom_ver.set("")
+        tk.messagebox.Message(message="Could not download latest Kernal ROM").show()
+    
+    # Download latest VERA firmware
+    try:
+        vera_version = x16pkg.github_fetch_latest("X16Community", "vera-module", ".bin$", os.path.join(output_dir, "vera.bin"))
+    except:
+        vera_version = None
+
+    if vera_version != None:
+        vera_path.set(os.path.join(output_dir, "vera.bin"))
+        v = re.search("([0-9]+[.]{1}[0-9]+[.]{1}[0-9]+)", vera_version)
+        if v != None:
+            vera_ver.set(v.group(1))
+        else:
+            vera_ver.set("Unknown")
+    else:
+        vera_path.set("")
+        vera_ver.set("")
+        tk.messagebox.Message(message="Could not download latest VERA firmware").show()
+
+    # Download latest SMC firmware
+    try:
+        smc_version = x16pkg.github_fetch_latest("X16Community", "x16-smc", "x16-smc.ino.hex$", os.path.join(output_dir, "x16-smc.ino.hex"))
+    except:
+        smc_version = None
+
+    if smc_version != None:
+        smc_path.set(os.path.join(output_dir, "x16-smc.ino.hex"))
+        v = re.search("([0-9]+[.]{1}[0-9]+[.]{1}[0-9]+)", smc_version)
+        if v != None:
+            smc_ver.set(v.group(1))
+        else:
+            smc_ver.set("Unknown")
+    else:
+        smc_path.set("")
+        smc_ver.set("")
+        tk.messagebox.Message(message="Could not download latest SMC firmware").show()
+
+    
+    # Set package description
+    if rom_version != None and vera_version != None and smc_version != None:
+        pkg_description.set("X16 Latest Official Releases")
+        pkg_createdby.set("X16 Community")
 
 def btnCreate_click():
     # Validate input
@@ -120,6 +182,8 @@ window.columnconfigure(0, weight=1)
 window.columnconfigure(1, weight=50)
 window.columnconfigure(2, weight=1)
 
+pkg_description = tk.StringVar()
+pkg_createdby = tk.StringVar()
 
 rom_path = tk.StringVar()
 vera_path = tk.StringVar()
@@ -133,7 +197,7 @@ smc_ver = tk.StringVar()
 lblDescription = tk.Label(window, text="Package description")
 lblDescription.grid(row=0, column=0, padx=(15,0), pady=(15,0), sticky="w")
 
-txtDescription = tk.Entry(window)
+txtDescription = tk.Entry(window, textvariable=pkg_description)
 txtDescription.grid(row=0, column=1, pady=(15,0), sticky="we")
 txtDescription.focus()
 
@@ -141,7 +205,7 @@ txtDescription.focus()
 lblCreatedBy = tk.Label(window, text="Created by")
 lblCreatedBy.grid(row=1, column=0, padx=(15,0), sticky="w")
 
-txtCreatedBy = tk.Entry(window)
+txtCreatedBy = tk.Entry(window, textvariable=pkg_createdby)
 txtCreatedBy.grid(row=1, column=1, sticky="we")
 
 # Files
@@ -206,6 +270,9 @@ frame = tk.Frame(window)
 
 btnCancel = tk.Button(frame, text="Cancel", command=quit)
 btnCancel.pack(side=tk.LEFT)
+
+btnLatest = tk.Button(frame, text="Download Latest", command=btnLatest_click)
+btnLatest.pack(side=tk.LEFT)
 
 btnCreate = tk.Button(frame, text="Create Package", command=btnCreate_click)
 btnCreate.pack(side=tk.RIGHT)

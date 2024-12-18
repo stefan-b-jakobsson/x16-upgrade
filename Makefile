@@ -11,6 +11,10 @@ $(BUILD_DIR)/X16UPDATE.PRG: $(SRC_FILES)
 package:
 	python script/make_pkg.py
 
+# Download latest releases from Github and create package
+latest:
+	python script/latest.py
+
 # Clean
 clean:
 	rm -f -r $(BUILD_DIR)/*

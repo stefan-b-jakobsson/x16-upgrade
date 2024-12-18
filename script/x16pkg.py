@@ -25,6 +25,11 @@
 import os
 from datetime import datetime, timezone
 from intelhex import IntelHex
+import urllib
+from urllib import request
+import ssl
+import re
+import zipfile
 
 BLOB_ENTRY_SIZE = 16
 BLOBTYPE_TEXT = 0
@@ -195,3 +200,47 @@ def make_pkg(pkg_info, pkg_created_by, rom_path, vera_path, smc_path, vera_versi
     f.close()
 
     return [0, "Package created"]
+
+def github_fetch_latest(user, project, filename_filter, saveas):
+    # Create context without SSL verification
+    ssl._create_default_https_context = ssl._create_unverified_context
+    
+    # Github server address
+    server = "https://github.com"
+
+    # Fetch latest release page, and find "expanded_assets" link
+    temp = urllib.request.urlopen(server + "/" + user + "/" + project + "/releases/latest").read().decode("utf-8")
+    assets = re.findall(server + "/" + user + "/" + project + "/releases/expanded_assets/[^\"\']*", temp, re.IGNORECASE)
+    if len(assets) == 0:
+        return None
+
+    # Fetch assets page, and find "download" links
+    temp = urllib.request.urlopen(assets[0]).read().decode("utf-8")
+    downloads = re.findall("/" + user + "/" + project + "/releases/download/[^\"\']*", temp, re.IGNORECASE)
+
+    # Look for filename match in download links
+    for a in downloads:
+        rs = re.search("/([^/]+)/([^/]+$)", a, re.IGNORECASE)
+        name = rs.group(2)
+        version = rs.group(1)
+
+        if re.search(".zip$", name, re.IGNORECASE) != None:
+            # Handle zip files
+            urllib.request.urlretrieve(server + a, "res/temp.zip")
+            zip = zipfile.ZipFile("res/temp.zip")
+            for name in zip.namelist():
+                if re.search(filename_filter, name, re.IGNORECASE) != None:
+                    f = zip.open(name)
+                    content = f.read()
+                    f = open(saveas, "wb")
+                    f.write(content)
+                    f.close()
+                    return version
+
+        if re.search(filename_filter, name, re.IGNORECASE) != None:
+            # Handle other than zip files
+            urllib.request.urlretrieve(server + a, saveas)
+            return version
+    
+    # No release download found, return False
+    return None
