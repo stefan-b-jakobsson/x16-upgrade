@@ -51,6 +51,15 @@ three firmware components (ROM, VERA, and SMC).
 Creators of package files are responsible to make sure that the firmware components in a package 
 are compatible with each other.
 
+You can create your own package file with tools included in this project:
+
+- Type ```make latest``` in the project root folder. This command downloads the latest
+releases for the ROM, the VERA and the SMC, and builds a package of them
+
+- Type ```make package```in the project root folder. This opens up a GUI interface
+that lets you select each of the three firmware files manually, and build a package
+of them. The GUI inferface also supports downloading the latest releases from Github.
+
 More information on the package file format is found [here](doc/package-format.md).
 
 ## Package and Update Summary

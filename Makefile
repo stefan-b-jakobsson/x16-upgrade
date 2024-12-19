@@ -7,9 +7,9 @@ $(BUILD_DIR)/X16UPDATE.PRG: $(SRC_FILES)
 	cl65 -o $(BUILD_DIR)/X16UPGRADE.PRG -u __EXEHDR__ -t cx16 -C cx16-asm.cfg main.asm
 	rm -f main.o
 
-# Create package
+# Make custom package with GUI interface
 package:
-	python script/make_pkg.py
+	python script/gui_pkg.py
 
 # Download latest releases from Github and create package
 latest:
