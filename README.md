@@ -60,6 +60,9 @@ releases for the ROM, the VERA and the SMC, and builds a package of them
 that lets you select each of the three firmware files manually, and build a package
 of them. The GUI inferface also supports downloading the latest releases from Github.
 
+- You may also download the .py files in the script folder, and start the
+GUI interface with ```python gui_pkg.py```
+
 More information on the package file format is found [here](doc/package-format.md).
 
 ## Package and Update Summary
