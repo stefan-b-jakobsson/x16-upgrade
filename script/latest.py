@@ -22,8 +22,15 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import x16pkg
+# Python Standard Libraries
 import re
+
+# Non-standard Libraries
+try:
+    import x16pkg
+except:
+    print ("x16pkg.py library file not found.")
+    quit()
 
 print("Searching for latest Github releases...")
 

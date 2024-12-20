@@ -22,11 +22,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+# Python Standard Libraries
 import os
 import tkinter as tk
 from tkinter import filedialog as fd
-import x16pkg
 import re
+
+# Non-standard Libraries
+try:
+    import x16pkg
+except:
+    print ("x16pkg.py library file not found.")
+    quit()
 
 def rom_get_file():
     dialog = fd.askopenfilename(filetypes=[(".bin files", "*.bin")])

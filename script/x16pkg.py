@@ -22,15 +22,27 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+# Python Standard Library
 import os
 from datetime import datetime, timezone
-from intelhex import IntelHex
 import urllib
 from urllib import request
 import ssl
 import re
 import zipfile
-import certifi
+
+# Non-standard Libraries
+try:
+    from intelhex import IntelHex
+except:
+    print ("Non-standard library intelhex not installed. Install with: pip install intelhex.")
+    quit()
+
+try:
+    import certifi
+except:
+    print ("Non-standard library certifi not installed. Install with: pip install cerifi")
+    quit()
 
 BLOB_ENTRY_SIZE = 16
 BLOBTYPE_TEXT = 0
