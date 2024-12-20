@@ -30,6 +30,7 @@ from urllib import request
 import ssl
 import re
 import zipfile
+import certifi
 
 BLOB_ENTRY_SIZE = 16
 BLOBTYPE_TEXT = 0
@@ -202,21 +203,26 @@ def make_pkg(pkg_info, pkg_created_by, rom_path, vera_path, smc_path, vera_versi
     return [0, "Package created"]
 
 def github_fetch_latest(user, project, filename_filter, saveas):
-    # Create context without SSL verification
-    ssl._create_default_https_context = ssl._create_unverified_context
+    # Create HTTPS context
+    ctx = ssl.create_default_context(cafile=certifi.where())
     
     # Github server address
     server = "https://github.com"
 
     # Fetch latest release page, and find "expanded_assets" link
-    temp = urllib.request.urlopen(server + "/" + user + "/" + project + "/releases/latest").read().decode("utf-8")
+    req = urllib.request.urlopen(server + "/" + user + "/" + project + "/releases/latest", context=ctx)
+    temp = req.read().decode("utf-8")
     assets = re.findall(server + "/" + user + "/" + project + "/releases/expanded_assets/[^\"\']*", temp, re.IGNORECASE)
+    req.close()
+
     if len(assets) == 0:
         return None
 
     # Fetch assets page, and find "download" links
-    temp = urllib.request.urlopen(assets[0]).read().decode("utf-8")
+    req = urllib.request.urlopen(assets[0], context=ctx)
+    temp = req.read().decode("utf-8")
     downloads = re.findall("/" + user + "/" + project + "/releases/download/[^\"\']*", temp, re.IGNORECASE)
+    req.close()
 
     # Look for filename match in download links
     for a in downloads:
@@ -226,7 +232,12 @@ def github_fetch_latest(user, project, filename_filter, saveas):
 
         if re.search(".zip$", name, re.IGNORECASE) != None:
             # Handle zip files
-            urllib.request.urlretrieve(server + a, "res/temp.zip")
+            req = urllib.request.urlopen(server + a, context=ctx)
+            f = open("res/temp.zip", "wb")
+            f.write(req.read())
+            f.close()
+            req.close()
+            
             zip = zipfile.ZipFile("res/temp.zip")
             for name in zip.namelist():
                 if re.search(filename_filter, name, re.IGNORECASE) != None:
@@ -239,7 +250,11 @@ def github_fetch_latest(user, project, filename_filter, saveas):
 
         if re.search(filename_filter, name, re.IGNORECASE) != None:
             # Handle other than zip files
-            urllib.request.urlretrieve(server + a, saveas)
+            req = urllib.request.urlopen(server + a, context=ctx)
+            f = open(saveas, "wb")
+            f.write(req.read())
+            f.close()
+            req.close()
             return version
     
     # No release download found, return False

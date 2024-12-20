@@ -81,13 +81,10 @@ def btnLatest_click():
     # Download latest Kernal ROM
     try:
         rom_version = x16pkg.github_fetch_latest("X16Community", "x16-rom", "rom.bin$", os.path.join(output_dir, "rom.bin"))
-    except:
-        rom_version = None
-
-    if rom_version != None:
         rom_path.set(os.path.join(output_dir, "rom.bin"))
         rom_update_version()
-    else:
+    except:
+        rom_version = None
         rom_path.set("")
         rom_ver.set("")
         tk.messagebox.Message(message="Could not download latest Kernal ROM").show()
@@ -95,17 +92,14 @@ def btnLatest_click():
     # Download latest VERA firmware
     try:
         vera_version = x16pkg.github_fetch_latest("X16Community", "vera-module", ".bin$", os.path.join(output_dir, "vera.bin"))
-    except:
-        vera_version = None
-
-    if vera_version != None:
         vera_path.set(os.path.join(output_dir, "vera.bin"))
         v = re.search("([0-9]+[.]{1}[0-9]+[.]{1}[0-9]+)", vera_version)
         if v != None:
             vera_ver.set(v.group(1))
         else:
             vera_ver.set("Unknown")
-    else:
+    except:
+        vera_version = None
         vera_path.set("")
         vera_ver.set("")
         tk.messagebox.Message(message="Could not download latest VERA firmware").show()
@@ -113,22 +107,18 @@ def btnLatest_click():
     # Download latest SMC firmware
     try:
         smc_version = x16pkg.github_fetch_latest("X16Community", "x16-smc", "x16-smc.ino.hex$", os.path.join(output_dir, "x16-smc.ino.hex"))
-    except:
-        smc_version = None
-
-    if smc_version != None:
         smc_path.set(os.path.join(output_dir, "x16-smc.ino.hex"))
         v = re.search("([0-9]+[.]{1}[0-9]+[.]{1}[0-9]+)", smc_version)
         if v != None:
             smc_ver.set(v.group(1))
         else:
             smc_ver.set("Unknown")
-    else:
+    except:
+        smc_version = None
         smc_path.set("")
         smc_ver.set("")
         tk.messagebox.Message(message="Could not download latest SMC firmware").show()
 
-    
     # Set package description
     if rom_version != None and vera_version != None and smc_version != None:
         pkg_description.set("X16 Latest Official Releases")
