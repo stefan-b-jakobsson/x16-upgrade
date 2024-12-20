@@ -35,15 +35,15 @@ import zipfile
 try:
     from intelhex import IntelHex
 except:
-    print ("Non-standard library intelhex not installed. Install with: pip install intelhex.")
+    print ("Non-standard library intelhex not installed. Install with: pip install intelhex")
     quit()
 
 try:
     import certifi
+    certifi_installed = True
 except:
-    print ("Non-standard library certifi not installed. Install with: pip install cerifi")
-    quit()
-
+    certifi_installed = False
+    
 BLOB_ENTRY_SIZE = 16
 BLOBTYPE_TEXT = 0
 BLOBTYPE_X16_ROM = 1
@@ -215,6 +215,11 @@ def make_pkg(pkg_info, pkg_created_by, rom_path, vera_path, smc_path, vera_versi
     return [0, "Package created"]
 
 def github_fetch_latest(user, project, filename_filter, saveas):
+    # Abort if certifi not installed
+    if certifi_installed == False:
+        print("Non-standard library certifi not installed. Install with: pip install certifi")
+        quit()
+
     # Create HTTPS context
     ctx = ssl.create_default_context(cafile=certifi.where())
     
