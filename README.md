@@ -63,6 +63,10 @@ of them. The GUI inferface also supports downloading the latest releases from Gi
 - You may also download the .py files in the script folder, and start the
 GUI interface with ```python gui_pkg.py```
 
+The python scripts in the scripts folder depend on two non-standard libraries. You can install
+them with ```pip install -r script/requirements.txt``` or individually with ``pip install intelhex``` and
+```pip install certifi```
+
 More information on the package file format is found [here](doc/package-format.md).
 
 ## Package and Update Summary
