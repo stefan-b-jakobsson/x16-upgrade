@@ -1,6 +1,6 @@
 version_major = 0
 version_minor = 0
-version_patch = 1
+version_patch = 2
 
 .proc version_print
     lda #version_major
