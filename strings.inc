@@ -258,8 +258,13 @@ str5_smc_update_failed:
 str5_smc_reset:
     .byt "System shutdown... ", 0
 
+str5_smc_bootloader_v1:
+    .byt "Bootloader v1 detected. Disconnect "
+    .byt "the computer from mains power for at least 20 "
+    .byt "seconds to finish the update.", 0
+
 str5_smc_bad_bootloader:
-    .byt "Corrupted (bad) bootloader v2 detected. "
+    .byt 13, "Corrupted (bad) bootloader v2 detected. "
     .byt "DO NOT disconnect the computer from power. "
     .byt "Finish the update by grounding SMC reset "
     .byt "pin (#10). Check the README file before "

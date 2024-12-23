@@ -690,7 +690,12 @@ ee_rdy: .res 2
     clc
     rts
 
-:   ; Wait 5 seconds
+:   ; Check bootloader version
+    lda smc_bootloader
+    cmp #1
+    beq bootloader_v1
+
+    ; Wait 5 seconds
     print 1, str5_smc_reset
     lda #5
     ldx #0
@@ -712,6 +717,15 @@ ee_rdy: .res 2
     ; Wait until user resets SMC manually
 :   bra :-
 
+bootloader_v1:
+    ; Send reboot command to bootloader
+    ldx #SMC_ADDR
+    ldy #SMC_BOOTLOADER_REBOOT
+    jsr I2C_WRITE_BYTE
+
+    ; Print message and wait until computer is power cycled
+    print 1, str5_smc_bootloader_v1
+:   bra :-
 .endproc
 
 ;******************************************************************************
