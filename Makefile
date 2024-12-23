@@ -1,4 +1,5 @@
 BUILD_DIR=build
+RES_DIR=res
 SRC_FILES=$(wildcard *.asm *.inc)
 
 # Build program
@@ -13,6 +14,8 @@ package:
 
 # Download latest releases from Github and create package
 latest:
+	@mkdir -p $(BUILD_DIR)
+	@mkdir -p $(RES_DIR)
 	python script/latest.py
 
 # Clean
