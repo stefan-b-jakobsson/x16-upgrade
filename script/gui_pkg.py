@@ -81,13 +81,13 @@ def smc_version_array():
         return False
 def btnLatest_click():
     # Prompt user to select output folder
-    output_dir = fd.askdirectory(message="Select output folder", title="Select output folder", initialdir=os.path.dirname, mustexist=False)
+    output_dir = fd.askdirectory(title="Select output folder", initialdir=os.path.dirname, mustexist=False)
     if output_dir == "":
         return
     
     # Download latest Kernal ROM
     try:
-        rom_version = x16pkg.github_fetch_latest("X16Community", "x16-rom", "rom.bin$", os.path.join(output_dir, "rom.bin"))
+        rom_version = x16pkg.github_fetch_latest("X16Community", "x16-rom", "rom.bin$", output_dir, "rom.bin")
         rom_path.set(os.path.join(output_dir, "rom.bin"))
         rom_update_version()
     except:
@@ -98,7 +98,7 @@ def btnLatest_click():
     
     # Download latest VERA firmware
     try:
-        vera_version = x16pkg.github_fetch_latest("X16Community", "vera-module", ".bin$", os.path.join(output_dir, "vera.bin"))
+        vera_version = x16pkg.github_fetch_latest("X16Community", "vera-module", ".bin$", output_dir, "vera.bin")
         vera_path.set(os.path.join(output_dir, "vera.bin"))
         v = re.search("([0-9]+[.]{1}[0-9]+[.]{1}[0-9]+)", vera_version)
         if v != None:
@@ -113,7 +113,7 @@ def btnLatest_click():
 
     # Download latest SMC firmware
     try:
-        smc_version = x16pkg.github_fetch_latest("X16Community", "x16-smc", "x16-smc.ino.hex$", os.path.join(output_dir, "x16-smc.ino.hex"))
+        smc_version = x16pkg.github_fetch_latest("X16Community", "x16-smc", "x16-smc.ino.hex$", output_dir, "x16-smc.ino.hex")
         smc_path.set(os.path.join(output_dir, "x16-smc.ino.hex"))
         v = re.search("([0-9]+[.]{1}[0-9]+[.]{1}[0-9]+)", smc_version)
         if v != None:

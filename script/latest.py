@@ -35,7 +35,7 @@ except:
 print("Searching for latest Github releases...")
 
 # Fetch Kernal ROM
-rom_version = x16pkg.github_fetch_latest("X16Community", "x16-rom", "rom.bin$", "res/rom.bin")
+rom_version = x16pkg.github_fetch_latest("X16Community", "x16-rom", "rom.bin$", "res", "rom.bin")
 if rom_version == None:
     print("Kernal ROM not found")
     quit()
@@ -44,7 +44,7 @@ else:
     rom_real_version = x16pkg.get_rom_version("res/rom.bin")
 
 # Fetch VERA firmware
-vera_version = x16pkg.github_fetch_latest("X16Community", "vera-module", ".bin$", "res/vera.bin")
+vera_version = x16pkg.github_fetch_latest("X16Community", "vera-module", ".bin$", "res", "vera.bin")
 if vera_version == None:
     print("VERA firmware not found")
     quit()
@@ -55,7 +55,7 @@ else:
         vera_real_version[i] = int(vera_real_version[i])
 
 # Fetch SMC firmware
-smc_version = x16pkg.github_fetch_latest("X16Community", "x16-smc", "x16-smc.ino.hex$", "res/x16-smc.ino.hex")
+smc_version = x16pkg.github_fetch_latest("X16Community", "x16-smc", "x16-smc.ino.hex$", "res", "x16-smc.ino.hex")
 if smc_version == None:
     print("SMC firmware not found")
     quit()

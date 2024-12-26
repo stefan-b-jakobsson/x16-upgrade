@@ -214,7 +214,7 @@ def make_pkg(pkg_info, pkg_created_by, rom_path, vera_path, smc_path, vera_versi
 
     return [0, "Package created"]
 
-def github_fetch_latest(user, project, filename_filter, saveas):
+def github_fetch_latest(user, project, filename_filter, save_dir, save_name):
     # Abort if certifi not installed
     if certifi_installed == False:
         print("Non-standard library certifi not installed. Install with: pip install certifi")
@@ -250,17 +250,17 @@ def github_fetch_latest(user, project, filename_filter, saveas):
         if re.search(".zip$", name, re.IGNORECASE) != None:
             # Handle zip files
             req = urllib.request.urlopen(server + a, context=ctx)
-            f = open("res/temp.zip", "wb")
+            f = open(os.path.join(save_dir, "temp.zip"), "wb")
             f.write(req.read())
             f.close()
             req.close()
             
-            zip = zipfile.ZipFile("res/temp.zip")
+            zip = zipfile.ZipFile(os.path.join(save_dir, "temp.zip"))
             for name in zip.namelist():
                 if re.search(filename_filter, name, re.IGNORECASE) != None:
                     f = zip.open(name)
                     content = f.read()
-                    f = open(saveas, "wb")
+                    f = open(os.path.join(save_dir, save_name), "wb")
                     f.write(content)
                     f.close()
                     return version
@@ -268,7 +268,7 @@ def github_fetch_latest(user, project, filename_filter, saveas):
         if re.search(filename_filter, name, re.IGNORECASE) != None:
             # Handle other than zip files
             req = urllib.request.urlopen(server + a, context=ctx)
-            f = open(saveas, "wb")
+            f = open(os.path.join(save_dir, save_name), "wb")
             f.write(req.read())
             f.close()
             req.close()
