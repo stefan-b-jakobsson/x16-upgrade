@@ -95,6 +95,20 @@ def get_rom_version(src):
     f.close()
     return int(ba[0])
 
+def get_vera_version(src):
+    f = open(src, "rb")
+    ba = f.read(32)
+    f.close()
+
+    if ba[2:6] == b"VERA":
+        out = ""
+        for c in ba[6:]:
+            if c == 0:
+                return out.strip()
+            elif (c>=ord('0') and c<=ord('9')) or c==ord('.'):
+                out += chr(c)
+    return None
+
 def make_pkg(pkg_info, pkg_created_by, rom_path, vera_path, smc_path, vera_version, smc_version, pkg_path):
     # Package file format version
     pkg_version = 1
