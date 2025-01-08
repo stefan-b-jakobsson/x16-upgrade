@@ -99,15 +99,12 @@ def get_vera_version(src):
     f = open(src, "rb")
     ba = f.read(32)
     f.close()
-
-    if ba[2:6] == b"VERA":
-        out = ""
-        for c in ba[6:]:
-            if c == 0:
-                return out.strip()
-            elif (c>=ord('0') and c<=ord('9')) or c==ord('.'):
-                out += chr(c)
-    return None
+    s = ba[2:].decode("ascii")
+    rs = re.search("VERA[^\0|^0-9]*([0-9]+)[.]{1}([0-9]+)[.]{1}([0-9]+)", s, re.IGNORECASE)
+    if rs:
+        return [rs.group(1), rs.group(2), rs.group(3)]
+    else:
+        return None
 
 def make_pkg(pkg_info, pkg_created_by, rom_path, vera_path, smc_path, vera_version, smc_version, pkg_path):
     # Package file format version

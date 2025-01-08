@@ -63,11 +63,14 @@ def vera_update_version(self=0):
     try:
         v = x16pkg.get_vera_version(vera_path.get())
         if v != None:
-            vera_ver.set(v)
-        else:
-            vera_ver.set("")    
+            vera_ver.set(str(v[0]) + "." + str(v[1] + "." + str(v[2])))
+            txtVERAver.config(state=tk.DISABLED)
+            return
     except:
-        vera_ver.set("")
+        pass
+
+    vera_ver.set("")
+    txtVERAver.config(state=tk.NORMAL)
 
 def vera_version_array():
     try:
