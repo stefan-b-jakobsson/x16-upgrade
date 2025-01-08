@@ -57,11 +57,16 @@ def rom_update_version(self=0):
 def vera_get_file():
     dialog = fd.askopenfilename(filetypes=[(".bin files", "*.bin")])
     vera_path.set(dialog)
-    
-    v = x16pkg.get_vera_version(vera_path.get())
-    if v != None:
-        vera_ver.set(v)
-    else:
+    vera_update_version()
+
+def vera_update_version(self=0):
+    try:
+        v = x16pkg.get_vera_version(vera_path.get())
+        if v != None:
+            vera_ver.set(v)
+        else:
+            vera_ver.set("")    
+    except:
         vera_ver.set("")
 
 def vera_version_array():
@@ -230,6 +235,7 @@ lblVERA.grid(row=4, column=0, sticky="w", padx=(30,0))
 
 txtVERA = tk.Entry(window, textvariable=vera_path)
 txtVERA.grid(row=4, column=1, sticky="we")
+txtVERA.bind('<FocusOut>', vera_update_version)
 
 btnVERA = tk.Button(window, text="...", command=vera_get_file)
 btnVERA.grid(row=4, column=2, padx=(0,15))
