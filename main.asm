@@ -47,9 +47,9 @@
     lda ROM_SEL
     pha
     stz ROM_SEL
-    jsr util_init
 
     ; Init
+    jsr util_init
     jsr header_init
     jsr rom_init
     jsr vera_init
@@ -103,3 +103,5 @@
 .include "strings.inc"
 
 .include "file.inc"
+
+.include "help.inc"

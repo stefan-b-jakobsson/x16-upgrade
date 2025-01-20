@@ -209,12 +209,16 @@ t5:
     cmp #0  ; Known good bootloader
     bne :+
     print 1, str_ok_cr
-    bra t7
+    jmp t7
 
 :   cmp #1  ; Known bad bootloader
     bne :+
     print 1, str_warn_cr
     print 2, str4_smc_bad_bootloader3
+    jsr util_wait_keypress
+    jsr help_show
+    lda #3
+    jsr help_bad_bootloader
     bra t7
 
 :   cmp #2  ; Unknown bootloader
@@ -247,11 +251,19 @@ t6:
     ; High risk
     print 1, str_warn_cr
     print 2, str4_smc_bad_bootloader2
+    jsr util_wait_keypress
+    jsr help_show
+    lda #2
+    jsr help_bad_bootloader
     bra t7
  
     ; Low risk
-    print 1, str_warn_cr
-:   print 2,str4_smc_bad_bootloader1
+:   print 1, str_warn_cr
+    print 2,str4_smc_bad_bootloader1
+    jsr util_wait_keypress
+    jsr help_show
+    lda #1
+    jsr help_bad_bootloader
 
 t7:
     ; Test 7: Load SMC firmware into RAM buffer
@@ -713,9 +725,13 @@ ee_rdy: .res 2
 
     ; We're still alive, consequently the bad bootloader v2
     print 1, str5_smc_bad_bootloader
-
-    ; Wait until user resets SMC manually
-:   bra :-
+    lda #9
+    ldx #0
+    ldy #0
+    jsr util_countdown
+    jsr help_show
+    lda #0
+    jmp help_bad_bootloader ; Does not return
 
 bootloader_v1:
     ; Send reboot command to bootloader

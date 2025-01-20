@@ -93,11 +93,20 @@ VERA_BUF = $7f00
     lda #10
     sta max_attempts
 :   print 1, str4_vera_close_jp1
-    jsr util_wait_keypress
-    jsr vera_jedec
+    print 1, str_f1_help
+:   jsr util_wait_keypress
+    cmp #$70 ; F1 key code
+    bne :+
+
+    jsr help_show
+    sec
+    jsr help_jp1
+    bra :-
+
+:   jsr vera_jedec
     bcc :+
     dec max_attempts
-    bne :-
+    bne :---
     bra err
     
     ; Chip ID is OK
@@ -148,11 +157,19 @@ max_attempts:
 :   lda #10
     sta max_attempts
 :   jsr vera_jedec
-    bcc :+
+    bcc :+++
     print 1, str5_vera_close_jp1
-    jsr util_wait_keypress
-    dec max_attempts
-    bne :-
+    print 1, str_f1_help
+:   jsr util_wait_keypress
+    cmp #$70 ; F1
+    bne :+
+    jsr help_show
+    sec
+    jsr help_jp1
+    bra :-
+
+:   dec max_attempts
+    bne :---
     jmp err
 
     ; Select progress meter
@@ -335,9 +352,17 @@ loop:
 
     ; Request user to open VERA JP1
 :   print 1, str5_vera_open_jp1
-    jsr util_wait_keypress
-    jsr vera_jedec
-    bcc :-
+    print 1, str_f1_help
+:   jsr util_wait_keypress
+    cmp #$70 ; F1
+    bne :+
+    jsr help_show
+    clc
+    jsr help_jp1
+    bra :-
+
+:   jsr vera_jedec
+    bcc :---
 
     ; Return without error
     clc

@@ -475,11 +475,6 @@ exit:
     pla
 
     rts
-
-pet2scr_in:
-    .byt $20, $40, $60, $80, $a0, $c0, $e0, $ff
-pet2scr_adjust:
-    .byt $80, $00, $c0, $e0, $40, $c0, $80, $80
 .endproc
 
 ;******************************************************************************
@@ -672,30 +667,48 @@ loop:
 ; Function name.......: util_wait_keypress
 ; Purpose.............: Waits for keypress; reads keycodes directly over I2C
 ; Input...............: Nothing
-; Returns.............: Nothing
+; Returns.............: A = keycode
 .proc util_wait_keypress
     ; Read keycodes until buffer is empty
-    ldx #SMC_ADDR
+:   ldx #SMC_ADDR
     ldy #SMC_GET_KEY
-:   jsr I2C_READ_BYTE
+    jsr I2C_READ_BYTE
     cmp #0
     bne :-
 
     ; Wait for key down event
-    ldx #SMC_ADDR
-    ldy #SMC_GET_KEY
-:   jsr I2C_READ_BYTE
-    cmp #0
-    bmi :-              ; Ignore key up
+:   jsr util_get_key_code
     beq :-
 
-    ; Return
+    rts
+.endproc
+
+;******************************************************************************
+; Function name.......: util_get_key_code
+; Purpose.............: Get key code directly from SMC; key up events ignored
+; Input...............: Nothing
+; Returns.............: A = key code
+.proc util_get_key_code
+    ldx #SMC_ADDR
+    ldy #SMC_GET_KEY
+    jsr I2C_READ_BYTE
+    ora #0
+    bmi keyup
+    rts
+keyup:
+    lda #0
     rts
 .endproc
 
 
 screen_height: .res 1
 screen_width: .res 1
+
+pet2scr_in:
+    .byt $20, $40, $60, $80, $a0, $c0, $e0, $ff
+
+pet2scr_adjust:
+    .byt $80, $00, $c0, $e0, $40, $c0, $80, $80
 
 .ZEROPAGE
     tmp1: .res 2

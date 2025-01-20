@@ -35,6 +35,9 @@ str_fail_cr:
 str_warn_cr:
     .byt "WARN", 13, 0
 
+str_f1_help:
+    .byt "Press any key, F1 for help", 13, 0
+
 
 ; Screen 1: Welcome
 str1_welcome: 
@@ -163,13 +166,16 @@ str4_smc_bootloader_unsupported:
     .byt "Unsupported version", 13, 0
 
 str4_smc_bad_bootloader1:
-    .byt "Bad v2, low risk",13,0
+    .byt "Bad v2, low risk",13
+    .byt "Press any key for help", 13, 0
 
 str4_smc_bad_bootloader2:
-    .byt "Bad v2, high risk",13, 0
+    .byt "Bad v2, high risk",13
+    .byt "Press any key for help", 13, 0
 
 str4_smc_bad_bootloader3:
-    .byt "Bad v2, confirmed",13, 0
+    .byt "Bad v2, confirmed",13
+    .byt "Press any key for help", 13, 0
 
 str4_smc_unknown_bootloader:
     .byt "Unknown version", 13, 0
@@ -184,8 +190,7 @@ str4_vera_loading:
     .byt "Loading... 0%", 0
 
 str4_vera_close_jp1:
-    .byt "Close JP1 on the VERA board", 13
-    .byt "Press any key to continue", 13, 0
+    .byt "Close JP1 on the VERA board", 13, 0
 
 str4_vera_chip_ok:
     .byt "Chip ID... OK", 13, 0
@@ -208,8 +213,7 @@ str5_vera_header:
     .byt "VERA", 13, 0
 
 str5_vera_close_jp1:
-    .byt "Close JP1 on the VERA board", 13
-    .byt "Press any key to continue", 13, 0
+    .byt "Close JP1 on the VERA board", 13, 0
 
 str5_vera_erase:
     .byt "Erasing...", 0
@@ -221,8 +225,7 @@ str5_vera_verify:
     .byt "Verifying... 0%", 0
 
 str5_vera_open_jp1:
-    .byt "Open JP1 on the VERA board", 13
-    .byt "Press any key to continue", 13, 0
+    .byt "Open JP1 on the VERA board", 13, 0
 
 str5_rom_header:
     .byt "ROM", 13, 0
@@ -264,11 +267,10 @@ str5_smc_bootloader_v1:
     .byt "seconds to finish the update.", 0
 
 str5_smc_bad_bootloader:
-    .byt 13, "Corrupted (bad) bootloader v2 detected. "
-    .byt "DO NOT disconnect the computer from power. "
-    .byt "Finish the update by grounding SMC reset "
-    .byt "pin (#10). Check the README file before "
-    .byt "you proceed.", 0
+    .byt 13, 13, "Corrupted (bad) bootloader v2 detected. ", 13
+    .byt "DO NOT disconnect the computer from power. ", 13
+    .byt "Stand by for help... ", 0
+
 
 str5_reset_msg:
     .byt "System reset... ", 0
@@ -300,3 +302,99 @@ str6_btn_exit_end:
 str6_btn_install:
     .byt "<Install>"
 str6_btn_install_end:
+
+
+; Help screen
+
+str_hlp_j1_close:
+    .byt "rom chip write-protected", 13
+    .byt $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, 13, 13
+    .byt "the rom chip is currently write-", 13
+    .byt "protected.", 13, 13
+    .byt "to write-enable the rom chip,", 13
+    .byt "place a jumper over the pins at", 13
+    .byt "position ", 34, "j1", 34, ".", 13, 13
+    .byt "it is adviced that you unplug the", 13
+    .byt "computer from mains power before", 13
+    .byt "installing the jumper.", 13, 13, 13
+    .byt "press any key", 0
+
+str_hlp_jp1_close:
+    .byt "vera write-protected", 13
+    .byt $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, 13, 13
+    .byt "connect the pins at position", 13
+    .byt 34, "jp1", 34, " to write-enable the vera.", 13
+    .byt "this must be done without turning", 13
+    .byt "off the computer or this program.", 13, 13
+    .byt "it is adviced to use a female to", 13
+    .byt "female jumper wire.", 13, 13
+    .byt "avoid touching any of the", 13
+    .byt "components on the vera board.", 13, 13, 13
+    .byt "press any key", 0
+
+str_hlp_jp1_open:
+    .byt "restore vera to normal operation", 13
+    .byt $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, 13, 13
+    .byt "the vera and sd card do not work", 13
+    .byt "when the pins at position ", 34, "jp1", 34, 13
+    .byt "are connected.", 13, 13
+    .byt "remove the jumper wire there in", 13
+    .byt "the previous step without turning", 13
+    .byt "off the computer or this program.", 13, 13
+    .byt "avoid touching any of the", 13
+    .byt "components on the vera board.", 13, 13, 13
+    .byt "press any key", 0
+
+str_hlp_bad_bootloader_header:
+    .byt "bad bootloader", 13
+    .byt $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, 13, 13, 0
+
+str_hlp_bad_bootloader_warning_1:
+    .byt "there is a low risk that the smc", 13
+    .byt "has a corrupted bootloader.", 13, 13, 0
+
+str_hlp_bad_bootloader_warning_2:
+    .byt "it is very likely that the smc", 13
+    .byt "has a corrupted bootloader.", 13, 13, 0
+
+str_hlp_bad_bootloader_warning_3:
+    .byt "it is confirmed that the smc has", 13
+    .byt "a corrupted bootloader", 13, 13, 0
+
+str_hlp_bad_bootloader_warning:
+    .byt "you must be prepared to reset the", 13
+    .byt "smc after the update by", 13
+    .byt "connecting smc pin #10 to ground.", 13
+    .byt "that requires good access to the", 13
+    .byt "board and a suitable piece of", 13
+    .byt "wire.", 13, 13
+    
+    .byt "if you are not sure how to", 13
+    .byt "proceed, it is recommended that", 13
+    .byt "you do not update the smc.", 13, 13, 13
+    
+    .byt "press any key", 0
+    
+str_hlp_bad_bootloader:    
+    .byt "the smc has a corrupted",13
+    .byt "bootloader.", 13, 13
+    
+    .byt "**do not** unplug the computer", 13
+    .byt "from power, as it will brick the", 13
+    .byt "system.", 13, 13
+    
+    .byt "to finish the update you need to", 13
+    .byt "connect smc pin #10 to ground", 13
+    .byt "using a piece of wire.", 13, 13
+
+    .byt "use the metal plating around", 13
+    .byt "a mounting hole as ground point.", 13, 13
+    
+    .byt "avoid touching any other part of", 13
+    .byt "the board.", 13, 13
+    
+    .byt "the connection should be just a", 13
+    .byt "short tap. the computer turns", 13
+    .byt "off immediately, and can then be", 13
+    .byt "restarted by pressing the power", 13
+    .byt "button.", 0

@@ -97,6 +97,12 @@ t1:
 
 :   ; Test 1, failed
     print 1, str_fail_cr
+    print 1, str_f1_help
+    jsr util_wait_keypress
+    cmp #$70 ; f1
+    bne fail
+    jsr help_show
+    jsr help_close_j1
     bra fail
     
 t2:
