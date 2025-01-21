@@ -338,9 +338,10 @@ str_hlp_jp1_open:
     .byt "the vera and sd card do not work", 13
     .byt "when the pins at position ", 34, "jp1", 34, 13
     .byt "are connected.", 13, 13
-    .byt "remove the jumper wire there in", 13
-    .byt "the previous step without turning", 13
-    .byt "off the computer or this program.", 13, 13
+    .byt "remove the jumper wire placed",13
+    .byt "there in the previous step", 13
+    .byt "without turning off the computer", 13
+    .byt "or this program.", 13, 13
     .byt "avoid touching any of the", 13
     .byt "components on the vera board.", 13, 13, 13
     .byt "press any key", 0
