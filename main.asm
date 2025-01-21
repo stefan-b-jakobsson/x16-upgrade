@@ -35,11 +35,54 @@
 ; Input...............: Nothing
 ; Returns.............: Nothing
 .proc main
-    ; Set PETSCII upper/lower case
+    ; Clear screen
+    lda #$93
+    jsr $ffd2
+
+    ; ISO off
     lda #$8f
     jsr $ffd2
+
+    ; Select PETSCII upper case/graphics, and copy tile map to VERA address $00:$4000
+    lda #$8e
+    jsr $ffd2
+
+    lda #1              ; VERA destination address
+    sta VERA_CTRL
+    stz VERA_ADDR0
+    lda #$40
+    sta VERA_ADDR1
+    lda #%00010000
+    sta VERA_ADDR2
+
+    stz VERA_CTRL       ; VERA source address
+    stz VERA_ADDR0
+    lda VERA_L1_TILEBASE
+    and #%11111100
+    asl
+    sta VERA_ADDR1
+    lda #%00001000
+    rol
+    sta VERA_ADDR2
+
+    ldx #$ff
+    ldy #$08
+
+:   lda VERA_ADDR1
+    lda VERA_D0
+    inc VERA_CTRL
+    sta VERA_D1
+    dec VERA_CTRL
+    dex
+    bne :-
+    dey
+    bne :-
+
+    ; Select PETSCII upper case/lower case
     lda #$0e
     jsr $ffd2
+    
+    ; Prevent charset changes from the keyboard
     lda #$08
     jsr $ffd2
 

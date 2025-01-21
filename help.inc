@@ -1,3 +1,27 @@
+; Copyright (c) 2024, Stefan Jakobsson
+
+; Redistribution and use in source and binary forms, with or without 
+; modification, are permitted provided that the following conditions are met:
+
+; (1) Redistributions of source code must retain the above copyright notice, 
+;     this list of conditions and the following disclaimer. 
+;
+; (2) Redistributions in binary form must reproduce the above copyright notice,
+;     this list of conditions and the following disclaimer in the documentation
+;     and/or other materials provided with the distribution.
+
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+; ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+; LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+; CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+; SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+; INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+; CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+; POSSIBILITY OF SUCH DAMAGE.
+
 HELP_SCREEN_WIDTH = 64
 HELP_SCREEN_HEIGHT = 50
 HELP_BOARD_WIDTH = 30
@@ -5,11 +29,12 @@ HELP_BOARD_HEIGHT = 30
 
 ;******************************************************************************
 ; Function name.......: help_init
-; Purpose.............: Initializes help screen buffer
+; Purpose.............: Initializes help screen buffer, which is located
+;                       at VERA address $00:$0000
 ; Input...............: Nothing
 ; Returns.............: Nothing
 .proc help_init
-    ; Clear help screen buffer, start address $0:0000
+    ; Clear help screen buffer
     stz VERA_ADDR0
     stz VERA_ADDR1
     lda #%00010000
@@ -63,7 +88,7 @@ loop:
     cmp #HELP_BOARD_HEIGHT
     bne loop
 
-    ; Copy credits for the graphics to screen buffer
+    ; Copy credits for the board graphics
     lda #2
     sta VERA_ADDR0
     lda #HELP_BOARD_HEIGHT
@@ -118,10 +143,13 @@ loop:
 
     lda VERA_L1_MAPBASE
     sta help_vera_backup+11
+    lda VERA_L1_TILEBASE
+    sta help_vera_backup+12
 
+    ; Backup interrupt flag
     php
     pla
-    sta help_vera_backup+12
+    sta help_vera_backup+13
 
     ; Init screen buffer
     jsr help_init
@@ -148,9 +176,9 @@ loop:
     lda #$dc
     sta VERA_DC_VSTOP
 
-    ; Select PETSCII uppercase/graphics
-    lda #$8e
-    jsr $ffd2
+    ; Select PETSCII uppercase/graphics, stored at VERA address $00:$4000
+    lda #(($4000>>9) & %11111100)
+    sta VERA_L1_TILEBASE
 
     ; Disable interrupts
     sei
@@ -197,11 +225,14 @@ loop:
     
     lda help_vera_backup+11
     sta VERA_L1_MAPBASE
+    lda help_vera_backup+12
+    sta VERA_L1_TILEBASE
 
     lda help_vera_backup+3
     sta VERA_CTRL
 
-    lda help_vera_backup+12
+    ; Restore interrupt flag
+    lda help_vera_backup+13
     pha
     plp
     
@@ -210,19 +241,18 @@ loop:
 
 ;******************************************************************************
 ; Function name.......: help_close_j1
-; Purpose.............: Show J1 location
+; Purpose.............: Displays help message about jumper J1 that controls
+;                       whether ROM is write-enabled
 ; Input...............: Nothing
 ; Returns.............: Nothing
 .proc help_close_j1
-    ; J1 = row 28, column 3
-
     ; Print message
     stz VERA_ADDR1
     ldx #<str_hlp_j1_close
     ldy #>str_hlp_j1_close
     jsr help_print
 
-    ; Toggle colors
+    ; Toggle colors at the J1 label (row 28, columns 3-5)
 :   ldx #3
     ldy #28
     lda #3
@@ -233,18 +263,18 @@ loop:
     cmp #0
     beq :-
 
+    ; Hide help screen and return
     jmp help_hide
 .endproc
 
 ;******************************************************************************
 ; Function name.......: help_jp1
-; Purpose.............: Show JP1 location
-; Input...............: C=0 => Instructions on opening JP1
-;                       C=1 => Instructions on closing JP1
+; Purpose.............: Displays help message about jumper JP1 that controls
+;                       whether VERA is write-enabled
+; Input...............: C=0 => Instructions on opening JP1 (not write-enabled)
+;                       C=1 => Instructions on closing JP1 (write-enabled)
 ; Returns.............: Nothing
 .proc help_jp1
-    ; JP1 = row 5, column 17
-    
     stz VERA_ADDR1
     bcc :+
 
@@ -259,7 +289,7 @@ loop:
 
 :   jsr help_print
 
-    ; Toggle colors
+    ; Toggle colors at label JP1 (row 5, columns 17-20)
 :   ldx #17
     ldy #5
     lda #4
@@ -270,26 +300,32 @@ loop:
     cmp #0
     beq :-
 
+    ; Hide help screen and return
     jmp help_hide
 .endproc
 
 ;******************************************************************************
 ; Function name.......: help_bad_bootloader
-; Purpose.............: Show help for bad bootloader v2
+; Purpose.............: Display help message for the "bad" bootloader
 ; Input...............: A = 0 => Bad bootloader detected after update
 ;                       A = 1 => Pre-update warning: bad bootloader low risk
 ;                       A = 2 => Pre-update warning: bad bootloader high risk
 ;                       A = 3 => Pre-update warning: bad bootloader confirmed
 ; Returns.............: Nothing
 .proc help_bad_bootloader
-    ; Position to display enlarged SMC image
-    xpos = 9
-    ypos = 13
-
     ; Store input on stack
     pha
 
+    ; Print header
+    stz VERA_ADDR1
+    ldx #<str_hlp_bad_bootloader_header
+    ldy #>str_hlp_bad_bootloader_header
+    jsr help_print
+
     ; Copy SMC image to screen buffer
+    xpos = 9
+    ypos = 13
+
     lda #xpos*2
     sta VERA_ADDR0
     lda #ypos
@@ -297,40 +333,47 @@ loop:
     lda #%00010000
     sta VERA_ADDR2
     
+    lda #<help_smc_img
+    sta tmp1
+    lda #>help_smc_img
+    sta tmp1+1
+
     ldy #0
-loop2:
-    lda help_smc_img1,y
+loop:
+    ; Copy line
+    lda (tmp1),y
     sta VERA_D0
     iny
-    lda VERA_ADDR0
-    cmp #xpos*2+20
-    bcc loop2
-    lda #xpos*2
-    sta VERA_ADDR0
-    inc VERA_ADDR1
-    lda VERA_ADDR1
-    cmp #ypos+8
-    bcc loop2
+    cpy #20
+    bcc loop
     
-    ldy #0
-loop3:
-    lda help_smc_img2,y
-    sta VERA_D0
-    iny
-    lda VERA_ADDR0
-    cmp #xpos*2+20
-    bcc loop3
+    ; Rewind column
     lda #xpos*2
     sta VERA_ADDR0
+
+    ; Increment pointer
+    clc
+    tya
+    adc tmp1
+    sta tmp1
+    lda tmp1+1
+    adc #0
+    sta tmp1+1
+
+    ; Rewind index
+    ldy #0
+
+    ; Increment row, and check if done
     inc VERA_ADDR1
     lda VERA_ADDR1
     cmp #ypos+16
-    bcc loop3
+    bcc loop
 
-    ; Show help text
-    stz VERA_ADDR1
+    ; Show requested help text
+    lda #3
+    sta VERA_ADDR1
 
-    pla
+    pla ; Get input stored on stack
     beq post_update
     cmp #1
     beq pre_update_1
@@ -340,27 +383,18 @@ loop3:
     bne hide ; Invalid input
 
 pre_update_3:
-    ldx #<str_hlp_bad_bootloader_header
-    ldy #>str_hlp_bad_bootloader_header
-    jsr help_print
     ldx #<str_hlp_bad_bootloader_warning_3
     ldy #>str_hlp_bad_bootloader_warning_3
     jsr help_print
     bra pre_update
 
 pre_update_2:
-    ldx #<str_hlp_bad_bootloader_header
-    ldy #>str_hlp_bad_bootloader_header
-    jsr help_print
     ldx #<str_hlp_bad_bootloader_warning_2
     ldy #>str_hlp_bad_bootloader_warning_2
     jsr help_print
     bra pre_update
 
 pre_update_1:
-    ldx #<str_hlp_bad_bootloader_header
-    ldy #>str_hlp_bad_bootloader_header
-    jsr help_print
     ldx #<str_hlp_bad_bootloader_warning_1
     ldy #>str_hlp_bad_bootloader_warning_1
     jsr help_print
@@ -379,9 +413,6 @@ hide:
     jmp help_hide
 
 post_update:
-    ldx #<str_hlp_bad_bootloader_header
-    ldy #>str_hlp_bad_bootloader_header
-    jsr help_print
     ldx #<str_hlp_bad_bootloader
     ldy #>str_hlp_bad_bootloader
     jsr help_print
@@ -551,7 +582,8 @@ help_vera_backup:
     .res 1      ; 9: vstart
     .res 1      ; 10: vstop
     .res 1      ; 11: l1_mapbase
-    .res 1      ; 12: interrupt flag
+    .res 1      ; 12: l1_tilebase
+    .res 1      ; 13: interrupt flag
 
 help_cur_col:
     .byt $01
@@ -603,7 +635,7 @@ help_board_credits:
 
 ;******************************************************************************
 ; SMC chip PETSCII graphics
-help_smc_img1:
+help_smc_img:
     .byt $55, $61, $43, $61, $43, $61, $43, $61, $43, $61, $43, $61, $43, $61, $43, $61, $49, $61, $20, $61
     .byt $42, $61, $20, $61, $20, $61, $13, $6f, $0d, $6f, $03, $6f, $20, $61, $20, $61, $42, $61, $20, $61
     .byt $42, $61, $20, $61, $20, $61, $70, $01, $43, $01, $6e, $01, $20, $61, $20, $61, $42, $61, $20, $61
@@ -612,8 +644,6 @@ help_smc_img1:
     .byt $42, $61, $20, $61, $33, $61, $73, $01, $14, $01, $6b, $01, $31, $61, $38, $61, $42, $61, $20, $61
     .byt $42, $61, $20, $61, $34, $61, $73, $01, $09, $01, $6b, $01, $31, $61, $37, $61, $42, $61, $20, $61
     .byt $42, $61, $20, $61, $35, $61, $73, $01, $0e, $01, $6b, $01, $31, $61, $36, $61, $42, $61, $20, $61
-
-help_smc_img2:
     .byt $42, $61, $20, $61, $36, $61, $73, $01, $19, $01, $6b, $01, $31, $61, $35, $61, $42, $61, $20, $61
     .byt $42, $61, $20, $61, $37, $61, $73, $01, $20, $01, $6b, $01, $31, $61, $34, $61, $42, $61, $1f, $61
     .byt $42, $61, $20, $61, $38, $61, $73, $01, $38, $01, $6b, $01, $31, $61, $33, $61, $42, $61, $20, $61

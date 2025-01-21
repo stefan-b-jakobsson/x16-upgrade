@@ -135,19 +135,13 @@ t1:
 
 t2:
     ; Test 2: SMC is write-enabled, available from SMC firmware 47.2.4
-    lda smc_cur_version
-    cmp #47
-    bcc t3
-    bne :+
-    lda smc_cur_version+1
-    cmp #2
-    bcc t3
-    bne :+
-    lda smc_cur_version+2
-    cmp #4
+    lda #47
+    ldy #2
+    ldx #4
+    jsr smc_compare_version_number
     bcc t3
 
-:   ; SMC firmware is >= 47.2.4, continue
+    ; SMC firmware is >= 47.2.4, continue
     print 1, str4_smc_write_enabled
 
     ; Read SMC extended fuse (efuse)
@@ -192,16 +186,10 @@ t4:
 
 t5: 
     ; Test 5: Bad bootloader (confirmed), possible to check from SMC firmware version 47.2.3
-    lda smc_cur_version
-    cmp #47
-    bcc t6
-    bne :+
-    lda smc_cur_version+1
-    cmp #2
-    bcc t6
-    bne :+
-    lda smc_cur_version+2
-    cmp #3
+    lda #47
+    ldy #2
+    ldx #3
+    jsr smc_compare_version_number
     bcc t6
 
 :   ; SMC firware is >= 47.2.3, continue
@@ -238,14 +226,10 @@ t6:
     bra t7
 
 :   ; Bootloader v2 + SMC firmware version 45.1.0 => Likely bad bootloader, otherwise low risk
-    lda smc_cur_version
-    cmp #45
-    bne :+
-    lda smc_cur_version+1
-    cmp #1
-    bne :+
-    lda smc_cur_version+2
-    cmp #0
+    lda #45
+    ldy #1
+    ldx #0
+    jsr smc_compare_version_number
     bne :+
 
     ; High risk
@@ -999,6 +983,48 @@ known_bad:
     .word $7594 ;v2 (bad)
 known_bad_end:
 .endproc
+
+;******************************************************************************
+; Function name.......: smc_compare_version_number
+; Purpose.............: Compares specified version number to the current
+;                       SMC firmware version stored in variable smc_cur_version
+; Input...............: A = major version
+;                       Y = minor version
+;                       X = patch
+; Returns.............: C = 0 if specified version is less than current version
+;                       C = 1 if specified version is equal to or greater than current version
+;                       Z = 1 if specified version is equal to the current version
+.proc smc_compare_version_number
+    cmp smc_cur_version
+    beq :+
+    bcs lt
+    bra gt
+
+:   cpy smc_cur_version+1
+    beq :+
+    bcs lt
+    bra gt
+
+:   cpx smc_cur_version+2
+    beq eq
+    bcs lt
+    bra gt
+
+eq:
+    lda #0
+    sec
+    rts
+
+gt:
+    lda #1
+    sec
+    rts
+
+lt:
+    lda #1
+    clc
+    rts
+.endproc 
 
 ;******************************************************************************
 ; Global variables

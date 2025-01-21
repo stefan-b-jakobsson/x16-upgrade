@@ -347,7 +347,7 @@ str_hlp_jp1_open:
 
 str_hlp_bad_bootloader_header:
     .byt "bad bootloader", 13
-    .byt $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, 13, 13, 0
+    .byt $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, 0
 
 str_hlp_bad_bootloader_warning_1:
     .byt "there is a low risk that the smc", 13
@@ -358,8 +358,8 @@ str_hlp_bad_bootloader_warning_2:
     .byt "has a corrupted bootloader.", 13, 13, 0
 
 str_hlp_bad_bootloader_warning_3:
-    .byt "it is confirmed that the smc has", 13
-    .byt "a corrupted bootloader", 13, 13, 0
+    .byt "the smc has a corrupted", 13
+    .byt "bootloader.", 13, 13, 0
 
 str_hlp_bad_bootloader_warning:
     .byt "you must be prepared to reset the", 13

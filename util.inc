@@ -700,7 +700,6 @@ keyup:
     rts
 .endproc
 
-
 screen_height: .res 1
 screen_width: .res 1
 
