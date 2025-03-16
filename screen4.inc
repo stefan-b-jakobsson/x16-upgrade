@@ -29,6 +29,9 @@
 ; Input...............: Nothing
 ; Returns.............: Nothing
 .proc screen4_show
+    ; Check if VERA JP1 is installed - Prompt user to remove if so
+    jsr screen7_show
+
     ; Clear and init widgets
     jsr widget_init
 
@@ -38,9 +41,18 @@
 
     ; Run pre-upgrade checks
     jsr rom_run_prechecks
+    lda rom_status
+    cmp #ROM_STATUS_PRECHECK_FAIL
+    beq add_buttons ; abort
+
     jsr smc_run_prechecks
+    lda smc_status
+    cmp #SMC_STATUS_PRECHECK_FAIL
+    beq add_buttons ; abort
+
     jsr vera_run_prechecks
 
+add_buttons:
     ; Add Back button (index 0)
     lda #13
     jsr CHROUT

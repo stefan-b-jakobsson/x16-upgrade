@@ -207,11 +207,13 @@ t5:
     jsr help_show
     lda #3
     jsr help_bad_bootloader
-    bra t7
+    jmp t7
 
 :   cmp #2  ; Unknown bootloader
-    bne t7
-    print 1, str_warn_cr
+    beq :+
+    jmp t7
+
+:   print 1, str_warn_cr
     print 2, str4_smc_unknown_bootloader
     bra t7
 
@@ -230,24 +232,40 @@ t6:
     ldy #1
     ldx #0
     jsr smc_compare_version_number
-    bne :+
+    bne t6l
 
     ; High risk
+t6h:
     print 1, str_warn_cr
     print 2, str4_smc_bad_bootloader2
-    jsr util_wait_keypress
+:   jsr util_wait_keypress
+    
+    cmp #$70 ; f1
+    bne :+
     jsr help_show
     lda #2
     jsr help_bad_bootloader
+    bra :-
+
+:   cmp #$6e ; ESC key code
+    beq fail
     bra t7
  
     ; Low risk
-:   print 1, str_warn_cr
+t6l:
+    print 1, str_warn_cr
     print 2,str4_smc_bad_bootloader1
-    jsr util_wait_keypress
+:   jsr util_wait_keypress
+    
+    cmp #$70 ; f1
+    bne :+
     jsr help_show
     lda #1
     jsr help_bad_bootloader
+    bra :-
+
+:   cmp #$6e ; ESC key code
+    beq fail
 
 t7:
     ; Test 7: Load SMC firmware into RAM buffer
@@ -691,9 +709,14 @@ ee_rdy: .res 2
     cmp #1
     beq bootloader_v1
 
-    ; Wait 5 seconds
-    print 1, str5_smc_reset
-    lda #5
+    ; Advise user to remove J1 jumper
+    jsr rom_is_write_enabled
+    bcs :+
+    print 1, str_exit_j1
+
+    ; Wait 10 seconds
+:   print 1, str5_smc_reset
+    lda #10
     ldx #0
     ldy #0  
     jsr util_countdown

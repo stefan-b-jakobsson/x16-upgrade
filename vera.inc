@@ -89,28 +89,25 @@ VERA_BUF = $7f00
     jsr vera_load
     bcs err
 
-    ; Request user to close JP1, fail after 10 attempts
-    lda #10
-    sta max_attempts
+    ; Request user to close JP1
 :   print 1, str4_vera_close_jp1
-    print 1, str_f1_help
 :   jsr util_wait_keypress
     cmp #$70 ; F1 key code
-    bne :+
+    beq :+
+    cmp #$6e ; ESC key code
+    beq err
+    bra :++
 
-    jsr help_show
+:   jsr help_show
     sec
     jsr help_jp1
-    bra :-
+    bra :--
 
 :   jsr vera_jedec
-    bcc :+
-    dec max_attempts
-    bne :---
-    bra err
+    bcs :----
     
     ; Chip ID is OK
-:   print 1, str4_vera_chip_ok
+    print 1, str4_vera_chip_ok
 
     ; Return without error
     lda #VERA_STATUS_LOAD_PASS
@@ -124,9 +121,6 @@ err:
     sta vera_status
     sec
     rts
-
-max_attempts:
-    .res 1
 .endproc
 
 ;******************************************************************************

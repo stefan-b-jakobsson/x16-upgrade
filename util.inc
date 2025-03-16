@@ -394,9 +394,13 @@ CR:
     jmp exit
 
 backspace:
+    ldx #32
     lda VERA_ADDR0
     cmp #2
     bcc :+
+    dec VERA_ADDR0
+    dec VERA_ADDR0
+    stx VERA_D0
     dec VERA_ADDR0
     dec VERA_ADDR0
 :   jmp exit
@@ -599,15 +603,16 @@ loop:
 
     ; Restore cursor
     ldx #1
+    ldy #0
     lda counter
     cmp #9
     bcc :+
     inx
     cmp #99
     bcc :+
-    inx
+    inx  
 
- :  lda #20
+:   lda #20
     jsr CHROUT
     dex
     bne :-

@@ -58,12 +58,16 @@ install_smc:
     bcs fail_smc
     jsr smc_reboot
 
-    ; Reset computer after countdown
-    print 0, str5_reset_msg
+    ; Reset computer after countdown. If SMC is updated; the smc_reboot function will turn off the computer
+    jsr rom_is_write_enabled
+    bcs :+
+    print 0, str_exit_j1
 
-    ldx #0 ; 5 second countdown
+:   print 0, str5_reset_msg
+
+    ldx #0 ; 10 second countdown
     ldy #0
-    lda #5
+    lda #10
     jsr util_countdown
 
     ; Jump to reset vector

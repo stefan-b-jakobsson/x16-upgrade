@@ -83,12 +83,7 @@ t1:
     print 1, str4_rom_write_enabled
     
     ; Attempt to write $ff to $01:$ffff
-    lda #$01
-    sta rom_target_bank
-    lda #$ff
-    sta rom_target_addr
-    sta rom_target_addr+1
-    jsr rom_write
+    jsr rom_is_write_enabled
     bcs :+
     
     ; Test 1, OK
@@ -512,6 +507,21 @@ callback:
 
     ; Update progress meter
     jmp progress_update
+.endproc
+
+;******************************************************************************
+; Function name.......: rom_is_write_enabled
+; Purpose.............: Checks if ROM chip is write-enabled
+; Input...............: Nothing
+; Returns.............: C = 0 => Write-enabled
+;                       C = 1 => Write protected
+.proc rom_is_write_enabled
+    lda #$01
+    sta rom_target_bank
+    lda #$ff
+    sta rom_target_addr
+    sta rom_target_addr+1
+    jmp rom_write
 .endproc
 
 ;******************************************************************************

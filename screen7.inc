@@ -22,58 +22,68 @@
 ; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ; POSSIBILITY OF SUCH DAMAGE.
 
+
 ;******************************************************************************
-; Function name.......: screen1_show
-; Purpose.............: Shows screen 1 - Welcome message
+; Function name.......: screen7_show
+; Purpose.............: Shows screen 7 - Remove JP1
 ; Input...............: Nothing
 ; Returns.............: Nothing
-.proc screen1_show
-    ; Check if VERA JP1 is installed - Prompt user to remove if so
-    jsr screen7_show
+.proc screen7_show
+    ; Return if JP is not installed
+    jsr vera_jedec
+    bcc :+
+    rts
 
     ; Clear and init widgets
-    jsr widget_init
-    
-    ; Print header and welcome message
+:   jsr widget_init
+
+    ; Print header
     jsr screen_header
-    print 0, str1_welcome
+    print 0, str7_header
 
-    ; Prompt for file name
-    print 0, str1_file_prompt
+    ; Print message
+    print 0, str7_jp1
 
-    ; Get file name
-    sec
-    jsr PLOT
-    clc
-    jsr $fff0   ; Real PLOT
+    ; Add OK button
+    ldx #<str7_btn_ok
+    ldy #>str7_btn_ok
+    lda #str7_btn_ok_end-str7_btn_ok
+    jsr widget_add_button
+    ldx #0
+    ldy #WIDGET_STATE_SELECTED
+    jsr widget_set_state
 
-    ldy #0
-:   jsr CHRIN
-    sta file_name,y
-    iny
-    cmp #13
-    bne :-
-    dey
-    sty file_name_len
+    ; Add help button
+    ldx #<str7_btn_help
+    ldy #>str7_btn_help
+    lda #str7_btn_help_end-str7_btn_help
+    jsr widget_add_button
 
-    jsr util_init
-    sec
-    jsr $fff0
-    clc
-    jsr PLOT
+    ; Listen
+listen:
+    jsr widget_listen
     
-    ; Fetch file header and check integrity
-    jsr header_fetch
-    bcs exit
-    jsr header_run_prechecks
-    bcs exit
+    ; OK button?
+    cpx #0
+    bne :+
 
-    ; Setup progress meters
-    jsr progress_init
-
-    ; Show screen 2
-    jmp screen2_show
-
-exit:
+    jsr vera_jedec  ; Exit if VERA JP1 is not installed
+    bcc listen
     rts
+
+    ; Help button?
+:   cpx #1
+    bne listen
+
+    jsr help_show
+    clc
+    jsr help_jp1
+    ldx #0
+    ldy #WIDGET_STATE_SELECTED 
+    jsr widget_set_state
+    ldx #1
+    ldy #WIDGET_STATE_ACTIVE
+    jsr widget_set_state
+    bra listen
 .endproc
+    

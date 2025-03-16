@@ -38,6 +38,8 @@ str_warn_cr:
 str_f1_help:
     .byt "Press any key, F1 for help", 13, 0
 
+str_exit_j1:
+    .byt 13, 13, "It is advised that you remove the jumper at position J1 on the main board after turning off the computer. That will protect the ROM from unintentional change.", 13, 13, 0
 
 ; Screen 1: Welcome
 str1_welcome: 
@@ -167,15 +169,15 @@ str4_smc_bootloader_unsupported:
 
 str4_smc_bad_bootloader1:
     .byt "Bad v2, low risk",13
-    .byt "Press any key for help", 13, 0
+    .byt "Press F1 for help, ESC to abort, any other key to continue", 13, 0
 
 str4_smc_bad_bootloader2:
     .byt "Bad v2, high risk",13
-    .byt "Press any key for help", 13, 0
+    .byt "Press F1 for help, ESC to abort, any other key to continue", 13, 0
 
 str4_smc_bad_bootloader3:
     .byt "Bad v2, confirmed",13
-    .byt "Press any key for help", 13, 0
+    .byt "Press F1 for help, ESC to abort, any other key to continue", 13, 0
 
 str4_smc_unknown_bootloader:
     .byt "Unknown version", 13, 0
@@ -190,7 +192,8 @@ str4_vera_loading:
     .byt "Loading... 0%", 0
 
 str4_vera_close_jp1:
-    .byt "Close JP1 on the VERA board", 13, 0
+    .byt "Close JP1 on the VERA board", 13
+    .byt "Press any key, F1 for help, ESC to abort", 13, 0
 
 str4_vera_chip_ok:
     .byt "Chip ID... OK", 13, 0
@@ -304,6 +307,22 @@ str6_btn_install:
 str6_btn_install_end:
 
 
+; Screen 7: Remove JP1
+
+str7_header:
+    .byt "UNINSTALL VERA JP1", 13, 13, 0
+
+str7_jp1:
+    .byt "Remove jumper JP1 on the VERA board to restore normal operation of the VERA and the SD card.", 13, 13, 0
+
+str7_btn_ok:
+    .byt "<OK>"
+str7_btn_ok_end:
+
+str7_btn_help:
+    .byt "<Help>"
+str7_btn_help_end:
+
 ; Help screen
 
 str_hlp_j1_close:
@@ -314,7 +333,7 @@ str_hlp_j1_close:
     .byt "to write-enable the rom chip,", 13
     .byt "place a jumper over the pins at", 13
     .byt "position ", 34, "j1", 34, ".", 13, 13
-    .byt "it is adviced that you unplug the", 13
+    .byt "it is advised that you unplug the", 13
     .byt "computer from mains power before", 13
     .byt "installing the jumper.", 13, 13, 13
     .byt "press any key", 0
@@ -326,8 +345,6 @@ str_hlp_jp1_close:
     .byt 34, "jp1", 34, " to write-enable the vera.", 13
     .byt "this must be done without turning", 13
     .byt "off the computer or this program.", 13, 13
-    .byt "it is adviced to use a female to", 13
-    .byt "female jumper wire.", 13, 13
     .byt "avoid touching any of the", 13
     .byt "components on the vera board.", 13, 13, 13
     .byt "press any key", 0
@@ -338,9 +355,8 @@ str_hlp_jp1_open:
     .byt "the vera and sd card do not work", 13
     .byt "when the pins at position ", 34, "jp1", 34, 13
     .byt "are connected.", 13, 13
-    .byt "remove the jumper wire placed",13
-    .byt "there in the previous step", 13
-    .byt "without turning off the computer", 13
+    .byt "remove the jumper placed there",13
+    .byt "without turning off the computer",13
     .byt "or this program.", 13, 13
     .byt "avoid touching any of the", 13
     .byt "components on the vera board.", 13, 13, 13
@@ -351,16 +367,18 @@ str_hlp_bad_bootloader_header:
     .byt $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, 0
 
 str_hlp_bad_bootloader_warning_1:
-    .byt "there is a low risk that the smc", 13
-    .byt "has a corrupted bootloader.", 13, 13, 0
+    .byt "there is a low risk that the", 13
+    .byt "system microcontroller (smc) has", 13
+    .byt "a corrupted bootloader.", 13, 13, 0
 
 str_hlp_bad_bootloader_warning_2:
-    .byt "it is very likely that the smc", 13
-    .byt "has a corrupted bootloader.", 13, 13, 0
+    .byt "it is very likely that the system", 13
+    .byt "microcontroller (smc) has a", 13
+    .byt "corrupted bootloader.", 13, 13, 0
 
 str_hlp_bad_bootloader_warning_3:
-    .byt "the smc has a corrupted", 13
-    .byt "bootloader.", 13, 13, 0
+    .byt "the system microcontroller (smc)" ,13
+    .byt "has a corrupted bootloader.", 13, 13, 0
 
 str_hlp_bad_bootloader_warning:
     .byt "you must be prepared to reset the", 13
@@ -377,8 +395,8 @@ str_hlp_bad_bootloader_warning:
     .byt "press any key", 0
     
 str_hlp_bad_bootloader:    
-    .byt "the smc has a corrupted",13
-    .byt "bootloader.", 13, 13
+    .byt "the system microcontroller (smc)", 13
+    .byt "has a corrupted bootloader.", 13, 13
     
     .byt "**do not** unplug the computer", 13
     .byt "from power, as it will brick the", 13

@@ -101,8 +101,16 @@
     ; Show screen 1
     jsr screen1_show
 
+    ; Check VERA JP1
+    jsr screen7_show
+
+    ; Check ROM J1
+    jsr rom_is_write_enabled
+    bcs :+
+    print 0, str_exit_j1
+
     ; Restore ROM bank
-    pla
+:   pla
     sta ROM_SEL
 
     ; Position cursor before returning
@@ -138,6 +146,7 @@
 .include "screen4.inc"
 .include "screen5.inc"
 .include "screen6.inc"
+.include "screen7.inc"
 
 .include "crc16.inc"
 .include "progress.inc"
