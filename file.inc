@@ -36,6 +36,15 @@ FILE_DEVICE = 8
 ; Returns.............: Nothing
 ; Error...............: C=1 on error
 .proc file_open
+    ; Restore current working directory
+    pha
+    phx
+    phy
+    jsr file_cwd_restore
+    ply
+    plx
+    pla
+
     ; Set name
     jsr SETNAM
 
@@ -392,8 +401,254 @@ size:
 .endproc
 
 ;******************************************************************************
+; Function name.......: file_cwd_backup
+; Purpose.............: Stores the current working directory in a RAM buffer
+; Input...............: Nothing
+; Returns.............: X = 0: No error
+;                       X = 1: File read error
+;                       X = 2: Buffer overrun error
+.proc file_cwd_backup
+    ; Init variables
+    lda #$ff
+    sta file_cwd_len ; Set to buffer len
+    stz rowcount
+    stz state        ; State machine states:
+                     ; 0-5  Leading bytes, ignored
+                     ; 6    Leading duoble quote
+                     ; 7    Folder name
+                     ; 8    Trailing double quote
+                     ; 9-   Trailing bytes, ignored
+
+    ; Put "CD:/" at start of buffer
+    lda #'c'
+    sta file_cwd_buf
+    lda #'d'
+    sta file_cwd_buf+1
+    lda #':'
+    sta file_cwd_buf+2
+    lda #'/'
+    sta file_cwd_buf+3
+
+    ; Prepare to load current working directory ($=C)
+    lda #3
+    ldx #<cmd
+    ldy #>cmd
+    jsr SETNAM
+
+    ; Set file params
+    lda #FILE_NUM
+    ldx #FILE_DEVICE
+    ldy #0
+    jsr SETLFS
+
+    ; Open file for reading
+    jsr OPEN
+    bcc :+
+    jmp err
+
+:   ldx #FILE_NUM
+    jsr CHKIN
+    bcc loop
+    jmp err
+
+loop:
+    ; Read one byte into X register
+    jsr CHRIN
+    tax
+    
+    ; Check file status
+    jsr READST
+    sta status
+    and #%10000010
+    beq :+
+    jmp err
+
+    ; Load state into A register
+:   lda state
+
+    ; Ignore first 6 bytes of the row (states 0-5)
+    cmp #6
+    bcs :+
+    jmp nextstate ; Yes, ignore
+
+    ; Is end of line?
+:   cpx #0 
+    bne :+ ; No
+
+    inc rowcount ; Yes, increment row counter,
+    stz state    ; and reset state
+    bra loop
+
+    ; Is duoble quote?
+:   cpx #34 ; X still holds char
+    bne storefolder ; No
+    
+    cmp #6  ; Yes, check if state is 6 => Start of folder name
+    bne :+ ; It isn't
+    ldy #3 ; It is, set Y index to first char after CD: in the buffer before continuing
+    bra nextstate
+
+:   cmp #7  ; Check, if state is 7 => End of folder name
+    bne nextstate ; No
+    ldx rowcount ; Load row into X register, we know that the char was double quote
+    beq nextstate ; Ignore first row
+
+    ; Copy folder name from start of buffer to end of buffer
+    ldx file_cwd_len
+    cpy #4 ; Abort if empty folder name
+    bcc nextstate
+
+:   cpy #4 ; Check if all chars have been copied
+    bcc :+
+    lda file_cwd_buf-1,y ; No, copy next char
+    sta file_cwd_buf,x
+    dec file_cwd_len ; Decrement pointers
+    dex
+    dey
+    bra :-
+
+    ; Add separator before the folder name
+:   lda #'/'
+    sta file_cwd_buf,x
+    dex
+    dec file_cwd_len
+    cpx #3
+    bcc overflow
+    bra nextstate
+
+storefolder:
+    ; Check state is receiving a folder name
+    cmp #7
+    bne nextchar ; No, it isn't
+
+    ; Ignore first row (disk name)
+    lda rowcount
+    beq loop
+
+    txa ; Move char into A
+storechar:
+    cmp #'/' ; Ignore forward slash
+    beq nextchar
+    sta file_cwd_buf,y ; Store char in cwd buffer
+    iny
+    cpy file_cwd_len
+    bcs overflow
+
+nextchar:
+    lda status ; Continue if file status is OK, else fall through to EOF
+    beq loop
+
+eof:
+    jsr cl ; close file
+    
+    ; Copy path to start of buffer, after leading "CD:"
+    ldx #$03
+    ldy file_cwd_len
+    iny
+    beq exit
+copy:
+    lda file_cwd_buf,y
+    sta file_cwd_buf,x
+    inx
+    iny
+    bne copy
+
+exit:
+    stx file_cwd_len
+    ldx #0 ; Set return value
+    rts
+
+nextstate:
+    ; Increment state
+    inc state
+    bra nextchar
+
+err:
+    ; Return with error
+    jsr cl
+    ldx #1
+    rts
+
+overflow:
+    ; Return with buffer overflow
+    jsr cl
+    ldx #2
+    rts
+    
+cl:
+    ; File close
+    lda #FILE_NUM
+    jsr CLOSE
+    jmp CLRCHN
+
+cmd: .byt "$=c"
+state: .res 1
+rowcount: .res 1
+status: .res 1
+.endproc
+
+;******************************************************************************
+; Function name.......: file_cwd_restore
+; Purpose.............: Restores the current working directory that was read
+;                       with file_cwd_backup
+; Returns.............: A = DOS return value, 0 if no error
+.proc file_cwd_restore
+    ; Prepare to send CD command
+    ldx #<file_cwd_buf
+    ldy #>file_cwd_buf
+    lda file_cwd_len
+    jsr SETNAM
+
+    ; Send command
+    lda #FILE_CMD1
+    ldx #FILE_DEVICE
+    ldy #15
+    jsr SETLFS
+    jsr OPEN
+
+    ; Read command channel
+    ldx #FILE_CMD1
+    jsr CHKIN
+
+    ldy #$ff
+loop:
+    jsr CHRIN
+    cpy #2
+    bcs :+
+    sta retval,y
+    dey
+:   jsr READST
+    beq loop
+
+    ; Close file
+    lda #FILE_CMD1
+    jsr CLOSE
+    jsr CLRCHN
+
+    ; Set return value
+    sec             ; Most significant digit
+    lda retval
+    sbc #$30
+    asl
+    asl
+    asl
+    sta retval
+
+    sec             ; Least significant digit
+    lda retval+1
+    sbc #$30
+    ora retval
+
+    rts
+
+retval: .res 2
+.endproc
+
+;******************************************************************************
 ; Global variables
 
 file_err: .res 1
 file_name: .res 256
 file_name_len: .res 1
+file_cwd_buf: .res 256
+file_cwd_len: .res 1

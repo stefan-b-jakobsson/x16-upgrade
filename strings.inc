@@ -41,6 +41,13 @@ str_f1_help:
 str_exit_j1:
     .byt 13, 13, "It is advised that you remove the jumper at position J1 on the main board after turning off the computer. That will protect the ROM from unintentional change.", 13, 13, 0
 
+; Program Main: These strings must be stored in this order
+str_cwd_readerr:
+    .byt "error: could not read current path", 13, 0
+
+str_cwd_overflow:
+    .byt "error: current path too long", 13, 0
+
 ; Screen 1: Welcome
 str1_welcome: 
     .byt "Welcome to the X16 system upgrade tool!",13,13

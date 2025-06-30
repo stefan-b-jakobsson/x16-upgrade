@@ -23,6 +23,7 @@
 ; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ; POSSIBILITY OF SUCH DAMAGE.
 
+.export file_cwd_buf
 
 ;******************************************************************************
 ; Global defines and macros
@@ -35,7 +36,32 @@
 ; Input...............: Nothing
 ; Returns.............: Nothing
 .proc main
+    ; Backup current working directory
+    jsr file_cwd_backup
+    cpx #0 ; OK
+    beq clrscr
+    cpx #1 ; File read error
+    beq cwd_readerr
+    ; Else path too long
+
+cwd_overflow:
+    ldx #str_cwd_overflow-str_cwd_readerr
+    bra cwd_printerr
+
+cwd_readerr:
+    ldx #0
+
+cwd_printerr:
+    lda str_cwd_readerr,x
+    beq cwd_exit
+    jsr $ffd2
+    inx
+    bra cwd_printerr
+cwd_exit:
+    rts
+
     ; Clear screen
+clrscr:
     lda #$93
     jsr $ffd2
 
@@ -112,6 +138,9 @@
     ; Restore ROM bank
 :   pla
     sta ROM_SEL
+
+    ; Restore CWD
+    jsr file_cwd_restore
 
     ; Position cursor before returning
     lda VERA_ADDR0
