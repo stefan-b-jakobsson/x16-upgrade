@@ -39,63 +39,60 @@ The active widget's action is performed when you press the Return key:
 - A button is clicked
 
 <p>
-<img width="500" alt="screen01" src="https://github.com/user-attachments/assets/b58cfebc-8388-46eb-8d33-f5ba203cb1e2" />
+<img width="500" alt="screen01 – medel" src="https://github.com/user-attachments/assets/e69b7025-1906-459f-9a6e-9dca377ff672" />
 <br><i>Screen 1: Type in package file name.</i></p>
 
 <p>
-<img width="500" alt="screen02a" src="https://github.com/user-attachments/assets/06b073e0-804a-48f5-9602-e0534aa8a6fe" />
+<img width="500" alt="screen02a – medel" src="https://github.com/user-attachments/assets/35ad82b7-3e4d-4a8f-929a-31dcee7d7192" />
 <br><i>Screen 2a: Package content.</i></p>
 
 <p>
-<img width="500" alt="screen02b" src="https://github.com/user-attachments/assets/964a734f-b40c-4d84-8db7-453a2c96f093" />
+<img width="500" alt="screen02b – medel" src="https://github.com/user-attachments/assets/2541e8a8-fce6-43da-82bb-eb8ca1617922" />
 <br><i>Screen 2b: Select components to install.</i></p>
 
 <p>
-<img width="500" alt="screen03a" src="https://github.com/user-attachments/assets/4efd6a73-0ff4-440d-8cdc-c7f283423a8f" />
+<img width="500" alt="screen03a – medel" src="https://github.com/user-attachments/assets/98190a34-c781-4bf0-a8bd-c2001ee748bc" />
 <br><i>Screen 3a: Pre-upgrade checks - ROM and SMC. Warning about bad bootloader.</i></p>
 
 <p>
-<img width="500" alt="screen03b" src="https://github.com/user-attachments/assets/6058f199-8f63-4c80-a9db-a9666d7603cf" />
+<img width="500" alt="screen03b – medel" src="https://github.com/user-attachments/assets/2f16a5c1-8103-4231-b2ee-a0afa347feae" />
 <br><i>Screen 3b: Bad bootloader help screen.</i></p>
 
 <p>
-<img width="500" alt="screen03c" src="https://github.com/user-attachments/assets/efebdf1f-f99a-4a75-bae6-20845c7da894" />
+<img width="500" alt="screen03c – medel" src="https://github.com/user-attachments/assets/c69f5b38-e008-4919-910b-1e1a8f987f7c" />
 <br><i>Screen 3c: Pre-upgrade checks - VERA.</i></p>
 
 <p>
-<img width="500" alt="screen03d" src="https://github.com/user-attachments/assets/f4249b56-d67f-4818-b071-a6176fdc25c2" />
+<img width="500" alt="screen03d – medel" src="https://github.com/user-attachments/assets/e65b938f-e9ee-4ac9-9934-32dddf055390" />
 <br><i>Screen 3d: VERA jumper JP1 help screen.</i></p>
 
 <p>
-<img width="500" alt="screen03e" src="https://github.com/user-attachments/assets/c7fa1d7f-02a7-4ebd-8d00-3c5da939fccd" />
+<img width="500" alt="screen03e – medel" src="https://github.com/user-attachments/assets/b54a0c27-a204-40ba-bdee-2d86fa82b373" />
 <br><i>Screen 3e: Pre-upgrade checks complete.</i></p>
 
 <p>
-<img width="500" alt="screen04" src="https://github.com/user-attachments/assets/140a56fc-472c-4b11-a7bb-cc4155e0769c" />
+<img width="500" alt="screen04 – medel" src="https://github.com/user-attachments/assets/3d62a485-7308-490b-a609-27110c060aba" />
 <br><i>Screen 4: Disclaimer.</i></p>
 
 <p>
-<img width="500" alt="screen05a" src="https://github.com/user-attachments/assets/f8ade4f3-e801-4235-af2c-42586fe3d84d" />
+<img width="500" alt="screen05a – medel" src="https://github.com/user-attachments/assets/2462725f-657e-4b7f-b33c-038e87638bb2" />
 <br><i>Screen 5a: Upgrading VERA, prompt to uninstall jumper JP1.</i></p>
 
 <p>
-<img width="500" alt="screen05b" src="https://github.com/user-attachments/assets/29f6ee7a-2f5f-4695-8350-249875a756ff" />
+<img width="500" alt="screen05b – medel" src="https://github.com/user-attachments/assets/5d0ef748-5318-4ca3-81c3-69eef6710d24" />
 <br><i>Screen 5b: Jumper JP1 uninstall help screen.</i></p>
 
 <p>
-<img width="500" alt="screen05c" src="https://github.com/user-attachments/assets/49130f7e-6118-4c7d-b036-352acda5f2ac" />
+<img width="500" alt="screen05c – medel" src="https://github.com/user-attachments/assets/ca95328a-df99-47fb-9594-704250e678f3" />
 <br><i>Screen 5c: Before upgrading SMC firmware.</i></p>
 
 <p>
-<img width="500" alt="screen05d" src="https://github.com/user-attachments/assets/ba155162-d178-44e9-ad05-ce01fe0f7f45" />
+<img width="500" alt="screen05d – medel" src="https://github.com/user-attachments/assets/a6fd7dd2-700f-4308-9ff6-c527ad7a992b" />
 <br><i>Screen 5d: SMC upgrade - Waiting for Power+Reset to be pressed.</i></p>
 
 <p>
-<img width="500" alt="screen05e" src="https://github.com/user-attachments/assets/503dbb94-0c6d-4a74-a655-5e1d5c0fc404" />
+<img width="500" alt="screen05e – medel" src="https://github.com/user-attachments/assets/aade25f1-c636-43b9-815f-28eeb3481a9c" />
 <br><i>Screen 5e: Upgrades complete.</i></p>
-
-
-
 
 
 ## Choose Package File
