@@ -38,7 +38,64 @@ The active widget's action is performed when you press the Return key:
 - A checkbox is toggled on or off
 - A button is clicked
 
-[![Running X16UPDATE](https://i9.ytimg.com/vi/7_O305oB4j0/mq2.jpg?sqp=CKzm-roG-oaymwEmCMACELQB8quKqQMa8AEB-AH-CYAC0AWKAgwIABABGBMgEyh_MA8=&rs=AOn4CLDjf9O_3T6c-bbmiX9N2XqBAAidPg)](https://youtu.be/7_O305oB4j0)
+<p>
+<img width="500" alt="screen01" src="https://github.com/user-attachments/assets/b58cfebc-8388-46eb-8d33-f5ba203cb1e2" />
+<br><i>Screen 1: Type in package file name.</i></p>
+
+<p>
+<img width="500" alt="screen02a" src="https://github.com/user-attachments/assets/06b073e0-804a-48f5-9602-e0534aa8a6fe" />
+<br><i>Screen 2a: Package content.</i></p>
+
+<p>
+<img width="500" alt="screen02b" src="https://github.com/user-attachments/assets/964a734f-b40c-4d84-8db7-453a2c96f093" />
+<br><i>Screen 2b: Select components to install.</i></p>
+
+<p>
+<img width="500" alt="screen03a" src="https://github.com/user-attachments/assets/4efd6a73-0ff4-440d-8cdc-c7f283423a8f" />
+<br><i>Screen 3a: Pre-upgrade checks - ROM and SMC. Warning about bad bootloader.</i></p>
+
+<p>
+<img width="500" alt="screen03b" src="https://github.com/user-attachments/assets/6058f199-8f63-4c80-a9db-a9666d7603cf" />
+<br><i>Screen 3b: Bad bootloader help screen.</i></p>
+
+<p>
+<img width="500" alt="screen03c" src="https://github.com/user-attachments/assets/efebdf1f-f99a-4a75-bae6-20845c7da894" />
+<br><i>Screen 3c: Pre-upgrade checks - VERA.</i></p>
+
+<p>
+<img width="500" alt="screen03d" src="https://github.com/user-attachments/assets/f4249b56-d67f-4818-b071-a6176fdc25c2" />
+<br><i>Screen 3d: VERA jumper JP1 help screen.</i></p>
+
+<p>
+<img width="500" alt="screen03e" src="https://github.com/user-attachments/assets/c7fa1d7f-02a7-4ebd-8d00-3c5da939fccd" />
+<br><i>Screen 3e: Pre-upgrade checks complete.</i></p>
+
+<p>
+<img width="500" alt="screen04" src="https://github.com/user-attachments/assets/140a56fc-472c-4b11-a7bb-cc4155e0769c" />
+<br><i>Screen 4: Disclaimer.</i></p>
+
+<p>
+<img width="500" alt="screen05a" src="https://github.com/user-attachments/assets/f8ade4f3-e801-4235-af2c-42586fe3d84d" />
+<br><i>Screen 5a: Upgrading VERA, prompt to uninstall jumper JP1.</i></p>
+
+<p>
+<img width="500" alt="screen05b" src="https://github.com/user-attachments/assets/29f6ee7a-2f5f-4695-8350-249875a756ff" />
+<br><i>Screen 5b: Jumper JP1 uninstall help screen.</i></p>
+
+<p>
+<img width="500" alt="screen05c" src="https://github.com/user-attachments/assets/49130f7e-6118-4c7d-b036-352acda5f2ac" />
+<br><i>Screen 5c: Before upgrading SMC firmware.</i></p>
+
+<p>
+<img width="500" alt="screen05d" src="https://github.com/user-attachments/assets/ba155162-d178-44e9-ad05-ce01fe0f7f45" />
+<br><i>Screen 5d: SMC upgrade - Waiting for Power+Reset to be pressed.</i></p>
+
+<p>
+<img width="500" alt="screen05e" src="https://github.com/user-attachments/assets/503dbb94-0c6d-4a74-a655-5e1d5c0fc404" />
+<br><i>Screen 5e: Upgrades complete.</i></p>
+
+
+
 
 
 ## Choose Package File
