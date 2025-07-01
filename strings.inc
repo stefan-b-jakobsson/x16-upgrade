@@ -240,6 +240,11 @@ str5_vera_open_jp1:
 str5_rom_header:
     .byt "ROM", 13, 0
 
+str5_rom_write_protected:
+    .byt "Chip is write protected", 13
+    .byt "Reinstall jumper at position J1", 13
+    .byt "Press any key to continue", 13, 0
+
 str5_rom_erase:
     .byt "Erasing...", 0
 

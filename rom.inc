@@ -165,6 +165,8 @@ fail:
     lda rom_status
     cmp #ROM_STATUS_LOAD_PASS
     beq :+
+
+    ; Also start update if status is ROM_STATUS_PRECHECK_PASS
     cmp #ROM_STATUS_PRECHECK_PASS
     beq :+
 
@@ -187,6 +189,13 @@ fail:
     sta rom_status
     sec
     rts
+
+    ; Check that jumper at position J1 on the main board is still installed (also verified during pre-checks)
+:   jsr rom_is_write_enabled
+    bcc :+
+    print 1, str5_rom_write_protected
+    jsr util_wait_keypress
+    bra :-
 
     ; Disable interrupts, shouldn't be re-enabled after this point
 :   sei

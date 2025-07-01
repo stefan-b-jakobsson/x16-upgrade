@@ -65,9 +65,9 @@ install_smc:
 
 :   print 0, str5_reset_msg
 
-    ldx #0 ; 10 second countdown
+    ldx #0 ; 20 second countdown
     ldy #0
-    lda #10
+    lda #20
     jsr util_countdown
 
     ; Jump to reset vector

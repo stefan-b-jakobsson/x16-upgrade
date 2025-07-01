@@ -714,9 +714,9 @@ ee_rdy: .res 2
     bcs :+
     print 1, str_exit_j1
 
-    ; Wait 10 seconds
+    ; Wait 20 seconds
 :   print 1, str5_smc_reset
-    lda #10
+    lda #20
     ldx #0
     ldy #0  
     jsr util_countdown
