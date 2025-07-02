@@ -71,7 +71,7 @@ them with ```pip install -r script/requirements.txt``` or individually with ```p
 
 More information on the package file format is found [here](doc/package-format.md).
 
-## Package and Update Summary
+## Package and Upgrade Summary
 
 <p>
 <img width="500" alt="screen02a – medel" src="https://github.com/user-attachments/assets/35ad82b7-3e4d-4a8f-929a-31dcee7d7192" />
@@ -119,6 +119,13 @@ checks.
 | Chip ID error       | Ensure the ROM chip is an SST39SF040, and that it's properly seated in the socket.|
 | Load error          | Try to restart the program.                                                       |
 
+<p>
+<img width="500" alt="screen03f" src="https://github.com/user-attachments/assets/3a889df0-2050-4215-ae6f-99eb60b59f20" />
+<br><i>Screen 3a: Pre-upgrade checks - ROM write-enable jumper (J1) not installed.</i></p>
+
+<p>
+<img width="500" alt="screen03g" src="https://github.com/user-attachments/assets/184aa9e8-5d22-4beb-9d0f-95c893dee9e8" />
+<br><i>Screen 3b: ROM write enable jumper (J1) help screen.</i></p>
 
 ### SMC
 
@@ -148,11 +155,11 @@ are found [here](https://github.com/X16Community/x16-smc/blob/main/doc/update-wi
 
 <p>
 <img width="500" alt="screen03a – medel" src="https://github.com/user-attachments/assets/98190a34-c781-4bf0-a8bd-c2001ee748bc" />
-<br><i>Screen 3a: Pre-upgrade checks - Bad bootloader warning.</i></p>
+<br><i>Screen 3c: Pre-upgrade checks - Bad bootloader warning.</i></p>
 
 <p>
 <img width="500" alt="screen03b – medel" src="https://github.com/user-attachments/assets/2f16a5c1-8103-4231-b2ee-a0afa347feae" />
-<br><i>Screen 3b: Bad bootloader help screen.</i></p>
+<br><i>Screen 3d: Bad bootloader help screen.</i></p>
 
 ### VERA
 
@@ -163,15 +170,15 @@ are found [here](https://github.com/X16Community/x16-smc/blob/main/doc/update-wi
 
 <p>
 <img width="500" alt="screen03c – medel" src="https://github.com/user-attachments/assets/c69f5b38-e008-4919-910b-1e1a8f987f7c" />
-<br><i>Screen 3c: Pre-upgrade checks - VERA.</i></p>
+<br><i>Screen 3e: Pre-upgrade checks - VERA.</i></p>
 
 <p>
 <img width="500" alt="screen03d – medel" src="https://github.com/user-attachments/assets/e65b938f-e9ee-4ac9-9934-32dddf055390" />
-<br><i>Screen 3d: VERA jumper JP1 help screen.</i></p>
+<br><i>Screen 3f: VERA jumper JP1 help screen.</i></p>
 
 <p>
 <img width="500" alt="screen03e – medel" src="https://github.com/user-attachments/assets/b54a0c27-a204-40ba-bdee-2d86fa82b373" />
-<br><i>Screen 3e: Pre-upgrade checks complete.</i></p>
+<br><i>Screen 3g: Pre-upgrade checks complete.</i></p>
 
 ## Upgrading Firmware
 
