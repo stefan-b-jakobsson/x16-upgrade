@@ -22,7 +22,6 @@
 ; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ; POSSIBILITY OF SUCH DAMAGE.
 
-
 FILE_NUM = 1        ; For reading file content
 FILE_CMD1 = 15      ; For get file size command
 FILE_CMD2 = 16      ; For file seek command
@@ -36,7 +35,8 @@ FILE_DEVICE = 8
 ; Returns.............: Nothing
 ; Error...............: C=1 on error
 .proc file_open
-    ; Restore current working directory
+    ; Restore current working directory, needed as reading JP1 status
+    ; throughout the operation of the program resets CWD to the root directory
     pha
     phx
     phy
@@ -56,13 +56,13 @@ FILE_DEVICE = 8
     lda #FILE_CMD2
     jsr CLOSE
 
-    ; Set params
+    ; Set file params
     lda #FILE_NUM
     ldx #FILE_DEVICE
     ldy #0
     jsr SETLFS
 
-    ; Open
+    ; Open file
     jsr OPEN
     bcs err
 
@@ -84,7 +84,7 @@ err:
 ;******************************************************************************
 ; Function name.......: file_open_and_seek
 ; Purpose.............: Opens a file for reading, and seeks the specified
-;                       file offset
+;                       file offset using the DOS P (Position) command
 ; Input...............: X/Y = Pointer to file name (LSB/MSB)
 ;                       A = File name length
 ;                       r1-r2 = File seek offset (32 bits)
@@ -288,7 +288,7 @@ batch_read: .res 1
 
 ;******************************************************************************
 ; Function name.......: file_close
-; Purpose.............: Closes all file handles
+; Purpose.............: Closes all file handles and resets the i/o channels
 ; Input...............: Nothing
 ; Returns.............: Nothing
 .proc file_close
@@ -304,7 +304,8 @@ batch_read: .res 1
 
 ;******************************************************************************
 ; Function name.......: file_get_size
-; Purpose.............: Returns the size of the currently open file
+; Purpose.............: Returns the size of the currently open file, read with
+;                       the DOS T (Tell) command
 ; Input...............: Nothing
 ; Returns.............: X/Y/A = File size (24 bits, low, mid, high)
 ; Error...............: C=1 on error
