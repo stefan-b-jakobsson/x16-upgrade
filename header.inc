@@ -36,6 +36,7 @@ HEADER_BLOB_SMC = 3
 ; Input...............: Nothing
 ; Returns.............: Nothing
 .proc header_init
+    ; Clear BLOB info (ROM, VERA, SMC)
     ldx #header_smc_start-header_rom_ver+3
     lda #0
 :   sta header_rom_ver-1,x
@@ -95,18 +96,18 @@ HEADER_BLOB_SMC = 3
     rts
 
     ; Read fixed part of header (103 first bytes from the package file) into header_buf
-:   lda #<header_buf
+:   lda #<header_buf    ; Target pointer
     sta r1
     lda #>header_buf
     sta r1+1
-    lda #103
+    lda #103            ; Byte count
     sta r2
     stz r2+1
     stz r2+2
-    stz r4
+    stz r4              ; No callback
     stz r4+1
-    jsr file_read
-    bcc :+
+    jsr file_read       ; Read header
+    bcc :+              ; Read error?
     jmp load_err
 
 :   ; Get file size
@@ -115,20 +116,20 @@ HEADER_BLOB_SMC = 3
     sty header_file_size+1
     sta header_file_size+2
 
-    ; Set BLOB count
+    ; Store BLOB count
     lda header_blob_count
     sta blobs
     lda header_blob_count+1
     sta blobs+1
 
-    ; Go to header CRC if no blobs
+    ; Check BLOB count: If no BLOBs, continue to header CRC
     lda blobs
     ora blobs+1
     bne :+
     jmp crc
 
     ; Calculate file seek offset of first BLOB (= 103 + 16 x BLOB count + 2)
-:   lda blobs
+:   lda blobs               ; BLOB count x 16
     sta header_cur_addr
     lda blobs+1
     sta header_cur_addr+1
@@ -140,9 +141,9 @@ HEADER_BLOB_SMC = 3
     dex
     bne :-
     
-    clc
+    clc                     ; Add 103 + 2 = 105 (header fixed size)
     lda header_cur_addr
-    adc #105 ; Header fixed part 103 bytes + CRC-16 (2 bytes)
+    adc #105
     sta header_cur_addr
     ldx #0
 :   lda header_cur_addr,x
@@ -153,20 +154,20 @@ HEADER_BLOB_SMC = 3
     bne :-
 
 loop:
-    ; Read BLOB entry (16 bytes)
-    lda #<header_blob
+    ; Read BLOB entry (16 bytes) from package file
+    lda #<header_blob   ; Target address
     sta r1
     lda #>header_blob
     sta r1+1
-    lda #16
+    lda #16             ; Read 16 bytes
     sta r2
     stz r2+1
     stz r2+2
     jsr file_read
-    bcc :+
+    bcc :+              ; Check read error
     jmp load_err
 
-    ; Check BLOB type
+    ; Store data depending on BLOB type
 :   lda header_blob_id
     cmp #HEADER_BLOB_ROM
     beq set_rom
@@ -174,16 +175,22 @@ loop:
     beq set_vera
     cmp #HEADER_BLOB_SMC
     beq set_smc
+    
+    ; Unknown BLOB type, ignore and just increment package file seek offset
+    bra inc_addr
 
 next:
+    ; Decrement counter for remaining BLOBs
     lda blobs
     bne :+
     dec blobs+1
 :   dec blobs
+
+    ; Check if BLOB counter is 0
     lda blobs
     ora blobs+1
-    beq crc
-    bra loop
+    beq crc ; yes, now read the header CRC
+    bra loop ; no, continue reading remaining BLOBs
 
 set_rom:
     ldx #8
@@ -224,7 +231,7 @@ set_smc:
     bne :-
 
 inc_addr:
-    ; Calculate file seek offset of the next BLOB
+    ; Calculate package file seek offset of the next BLOB
     clc
     lda header_cur_addr
     adc header_blob_size
@@ -241,25 +248,24 @@ inc_addr:
     bra next
 
 crc:
-    ; Store calculated CRC-16 value
+    ; Store header CRC-16 value
     lda crc16_val
     sta header_crc1
     lda crc16_val+1
     sta header_crc1+1
 
-    ; Read CRC-16 value from file
-    lda #<header_crc2
+    ; Read CRC-16 value from package file
+    lda #<header_crc2   ; target address
     sta r1
     lda #>header_crc2
     sta r1+1
-    lda #2
+    lda #2              ; byte count
     sta r2
     stz r2+1
     stz r2+2
     jsr file_read
-    bcs load_err
+    bcs load_err        ; check file read error
 
-exit:
     ; Unselect ROM if size is 0
     lda header_rom_size
     ora header_rom_size+1
@@ -284,6 +290,7 @@ exit:
     lda #SMC_STATUS_UNSELECTED
     sta smc_status
 
+    ; Close package file
 :   jmp file_close
 
 load_err:
