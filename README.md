@@ -38,64 +38,12 @@ The active widget's action is performed when you press the Return key:
 - A checkbox is toggled on or off
 - A button is clicked
 
+
+## Choose Package File
+
 <p>
 <img width="500" alt="screen01 – medel" src="https://github.com/user-attachments/assets/e69b7025-1906-459f-9a6e-9dca377ff672" />
 <br><i>Screen 1: Type in package file name.</i></p>
-
-<p>
-<img width="500" alt="screen02a – medel" src="https://github.com/user-attachments/assets/35ad82b7-3e4d-4a8f-929a-31dcee7d7192" />
-<br><i>Screen 2a: Package content.</i></p>
-
-<p>
-<img width="500" alt="screen02b – medel" src="https://github.com/user-attachments/assets/2541e8a8-fce6-43da-82bb-eb8ca1617922" />
-<br><i>Screen 2b: Select components to install.</i></p>
-
-<p>
-<img width="500" alt="screen03a – medel" src="https://github.com/user-attachments/assets/98190a34-c781-4bf0-a8bd-c2001ee748bc" />
-<br><i>Screen 3a: Pre-upgrade checks - ROM and SMC. Warning about bad bootloader.</i></p>
-
-<p>
-<img width="500" alt="screen03b – medel" src="https://github.com/user-attachments/assets/2f16a5c1-8103-4231-b2ee-a0afa347feae" />
-<br><i>Screen 3b: Bad bootloader help screen.</i></p>
-
-<p>
-<img width="500" alt="screen03c – medel" src="https://github.com/user-attachments/assets/c69f5b38-e008-4919-910b-1e1a8f987f7c" />
-<br><i>Screen 3c: Pre-upgrade checks - VERA.</i></p>
-
-<p>
-<img width="500" alt="screen03d – medel" src="https://github.com/user-attachments/assets/e65b938f-e9ee-4ac9-9934-32dddf055390" />
-<br><i>Screen 3d: VERA jumper JP1 help screen.</i></p>
-
-<p>
-<img width="500" alt="screen03e – medel" src="https://github.com/user-attachments/assets/b54a0c27-a204-40ba-bdee-2d86fa82b373" />
-<br><i>Screen 3e: Pre-upgrade checks complete.</i></p>
-
-<p>
-<img width="500" alt="screen04 – medel" src="https://github.com/user-attachments/assets/3d62a485-7308-490b-a609-27110c060aba" />
-<br><i>Screen 4: Disclaimer.</i></p>
-
-<p>
-<img width="500" alt="screen05a – medel" src="https://github.com/user-attachments/assets/2462725f-657e-4b7f-b33c-038e87638bb2" />
-<br><i>Screen 5a: Upgrading VERA, prompt to uninstall jumper JP1.</i></p>
-
-<p>
-<img width="500" alt="screen05b – medel" src="https://github.com/user-attachments/assets/5d0ef748-5318-4ca3-81c3-69eef6710d24" />
-<br><i>Screen 5b: Jumper JP1 uninstall help screen.</i></p>
-
-<p>
-<img width="500" alt="screen05c – medel" src="https://github.com/user-attachments/assets/ca95328a-df99-47fb-9594-704250e678f3" />
-<br><i>Screen 5c: Before upgrading SMC firmware.</i></p>
-
-<p>
-<img width="500" alt="screen05d – medel" src="https://github.com/user-attachments/assets/a6fd7dd2-700f-4308-9ff6-c527ad7a992b" />
-<br><i>Screen 5d: SMC upgrade - Waiting for Power+Reset to be pressed.</i></p>
-
-<p>
-<img width="500" alt="screen05e – medel" src="https://github.com/user-attachments/assets/aade25f1-c636-43b9-815f-28eeb3481a9c" />
-<br><i>Screen 5e: Upgrades complete.</i></p>
-
-
-## Choose Package File
 
 At the first screen, the user is prompted to enter the name of a package file.
 
@@ -125,6 +73,10 @@ More information on the package file format is found [here](doc/package-format.m
 
 ## Package and Update Summary
 
+<p>
+<img width="500" alt="screen02a – medel" src="https://github.com/user-attachments/assets/35ad82b7-3e4d-4a8f-929a-31dcee7d7192" />
+<br><i>Screen 2a: Package summary.</i></p>
+
 At the second screen, some general information about the selected package file is displayed:
 
 - A short description of the package, for instance "R48 Official Relase"
@@ -134,16 +86,20 @@ At the second screen, some general information about the selected package file i
 After that follows a list of firmware components to be installed including the
 version numbers of these new components.
 
-The program by default selects all three components to be installed. You may
-press the Custom button to select only the components you want to install. 
-Please note that a custom install requires that you verify yourself that the components 
-to be installed are compatible with the components that are not updated.
-
 The Kernal ROM version is prefixed with "R" if it's an official release, and
 "PR" if it's a pre-release. If it's a custom build, the word "Custom" is displayed".
 
 The respective version numbers of the VERA and SMC are displayed as such (major.minor.patch, for instance
 47.0.0).
+
+The program by default selects all three components to be installed. You may
+press the Custom button to select only the components you want to upgrade. 
+Please note that a custom install requires that you verify yourself that the components 
+to be upgrade are compatible with the components that are not updated.
+
+<p>
+<img width="500" alt="screen02b – medel" src="https://github.com/user-attachments/assets/2541e8a8-fce6-43da-82bb-eb8ca1617922" />
+<br><i>Screen 2b: Select components to upgrade.</i></p>
 
 ## Pre-upgrade Checks
 
@@ -190,6 +146,13 @@ reset the SMC at the end of the update process. If you just turn off the compute
 will most likely be corrupted. Instructions on the update procedure with the bad bootloader
 are found [here](https://github.com/X16Community/x16-smc/blob/main/doc/update-with-bad-bootloader-v2.md).
 
+<p>
+<img width="500" alt="screen03a – medel" src="https://github.com/user-attachments/assets/98190a34-c781-4bf0-a8bd-c2001ee748bc" />
+<br><i>Screen 3a: Pre-upgrade checks - Bad bootloader warning.</i></p>
+
+<p>
+<img width="500" alt="screen03b – medel" src="https://github.com/user-attachments/assets/2f16a5c1-8103-4231-b2ee-a0afa347feae" />
+<br><i>Screen 3b: Bad bootloader help screen.</i></p>
 
 ### VERA
 
@@ -198,8 +161,19 @@ are found [here](https://github.com/X16Community/x16-smc/blob/main/doc/update-wi
 | Load error                | Try to restart the program.                                    |
 | Close JP1                 | When prompted, JP1 on the VERA must be closed                  |
 
+<p>
+<img width="500" alt="screen03c – medel" src="https://github.com/user-attachments/assets/c69f5b38-e008-4919-910b-1e1a8f987f7c" />
+<br><i>Screen 3c: Pre-upgrade checks - VERA.</i></p>
 
-## Install Updates
+<p>
+<img width="500" alt="screen03d – medel" src="https://github.com/user-attachments/assets/e65b938f-e9ee-4ac9-9934-32dddf055390" />
+<br><i>Screen 3d: VERA jumper JP1 help screen.</i></p>
+
+<p>
+<img width="500" alt="screen03e – medel" src="https://github.com/user-attachments/assets/b54a0c27-a204-40ba-bdee-2d86fa82b373" />
+<br><i>Screen 3e: Pre-upgrade checks complete.</i></p>
+
+## Upgrading Firmware
 
 ### VERA
 
@@ -217,6 +191,14 @@ Try to install the VERA firmware again without resetting or power cycling the sy
 
 Instructions on how to recover a VERA board using an external programmer are found [here](https://github.com/X16Community/x16-docs/blob/master/X16%20Reference%20-%20Appendix%20B%20-%20VERA%20Recovery.md#appendix-b-vera-firmware-recovery).
 
+<p>
+<img width="500" alt="screen05a – medel" src="https://github.com/user-attachments/assets/2462725f-657e-4b7f-b33c-038e87638bb2" />
+<br><i>Screen 5a: VERA upgrade complete, prompt to uninstall jumper JP1.</i></p>
+
+<p>
+<img width="500" alt="screen05b – medel" src="https://github.com/user-attachments/assets/5d0ef748-5318-4ca3-81c3-69eef6710d24" />
+<br><i>Screen 5b: Jumper JP1 uninstall help screen.</i></p>
+
 
 ### ROM
 
@@ -229,6 +211,9 @@ you must first remove the ROM chip from its socket, and place it in the programm
 ROM chip you find the model name "SST39SF040". Use the programmer's software to write the 
 rom.bin file to the chip. The rom.bin file is found on the [Github release page](https://github.com/X16Community/x16-rom/releases)
 
+<p>
+<img width="500" alt="screen05c – medel" src="https://github.com/user-attachments/assets/ca95328a-df99-47fb-9594-704250e678f3" />
+<br><i>Screen 5c: ROM upgrade complete.</i></p>
 
 ### SMC
 
@@ -241,4 +226,12 @@ If the SMC update fails, you can do a recovery update if you have bootloader ver
 on that procedure are found [here](https://github.com/X16Community/x16-smc/blob/main/doc/update-guide.md#in-system-recovery-with-bootloader-v3).
 
 If that is not an option, you need to recover the SMC using an external programmer, as described [here](https://github.com/X16Community/x16-smc/blob/main/doc/update-guide.md#external-programmer).
+
+<p>
+<img width="500" alt="screen05d – medel" src="https://github.com/user-attachments/assets/a6fd7dd2-700f-4308-9ff6-c527ad7a992b" />
+<br><i>Screen 5d: SMC upgrade - Waiting for Power+Reset to be pressed.</i></p>
+
+<p>
+<img width="500" alt="screen05e – medel" src="https://github.com/user-attachments/assets/aade25f1-c636-43b9-815f-28eeb3481a9c" />
+<br><i>Screen 5e: Upgrade complete.</i></p>
 
