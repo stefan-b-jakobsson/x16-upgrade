@@ -81,10 +81,8 @@ ROM_MAX_ATTEMPTS = 10
 t1:
     ; Test 1: Chip write-enabled
     print 1, str4_rom_write_enabled
-    
-    ; Attempt to write $ff to $01:$ffff
     jsr rom_is_write_enabled
-    bcs :+
+    bcs :+ ; Not write enabled
     
     ; Test 1, OK
     print 1, str_ok_cr
@@ -177,12 +175,12 @@ fail:
     ; Print header
 :   print 0, str5_rom_header
 
-    ; Load ROM from file
+    ; Load ROM from file, if necessary
     lda rom_status
-    cmp #ROM_STATUS_PRECHECK_PASS
-    bne :+
+    cmp #ROM_STATUS_LOAD_PASS
+    beq :+ ; yes, it's already loaded
     jsr rom_load
-    bcc :+
+    bcc :+ ; load succeed
 
     ; Abort, loading ROM failed
     lda #ROM_STATUS_LOAD_FAIL
@@ -192,7 +190,7 @@ fail:
 
     ; Check that jumper at position J1 on the main board is still installed (also verified during pre-checks)
 :   jsr rom_is_write_enabled
-    bcc :+
+    bcc :+ ; yes
     print 1, str5_rom_write_protected
     jsr util_wait_keypress
     bra :-
@@ -215,7 +213,7 @@ fail:
     stz count+1
     stz count+2
 
-    lda #PROGRESS_ROM       ; Select progress meter
+    lda #PROGRESS_ROM       ; Select progress counter
     jsr progress_select
 
     lda #ROM_MAX_ATTEMPTS   ; Set max write errors
@@ -230,13 +228,14 @@ fail:
     print 1, str5_rom_write
 
 loop:
+    ; Write one byte to ROM
     lda (rom_src_addr)
     jsr rom_write
-    bcc :+
-    dec attempts
+    bcc :+ ; succeded
+    dec attempts ; try again
     bne loop
     
-    ; Write error
+    ; Report write error after ROM_MAX_ATTEMPTS
     lda #ROM_STATUS_UPDATE_FAIL
     sta rom_status
     sec
@@ -253,7 +252,7 @@ loop:
     bne :+
     inc count+2
 
-    ; Update progress meter
+    ; Update progress counter
 :   ldx count
     ldy count+1
     lda count+2
@@ -361,7 +360,7 @@ loop:
     bne :+
     inc count+2
 
-    ; Update progress meter
+    ; Update progress counter
 :   ldx count
     ldy count+1
     lda count+2
@@ -445,10 +444,10 @@ count: .res 3
 ; Returns.............: Nothing
 ; Errors..............: C=1 on error
 .proc rom_load
-    ; Reset CRC
+    ; Reset CRC value
     jsr crc16_init
 
-    ; Select progress meter
+    ; Select progress counter
     lda #PROGRESS_ROM
     jsr progress_select
 
@@ -503,7 +502,7 @@ err:
     rts
 
 callback:
-    ; Calculate number of bytes updated
+    ; Calculate number of bytes loaded
     sec
     lda header_rom_size
     sbc r2
@@ -514,7 +513,7 @@ callback:
     lda header_rom_size+2
     sbc r2+2
 
-    ; Update progress meter
+    ; Update progress counter
     jmp progress_update
 .endproc
 
@@ -525,12 +524,19 @@ callback:
 ; Returns.............: C = 0 => Write-enabled
 ;                       C = 1 => Write protected
 .proc rom_is_write_enabled
+    ; Theory of operation: The function attempts to write the value $ff to 
+    ; address $01:$ffff. The ROM write operation can only change a bit from 
+    ; 1 to 0, and not the other way. Writing $ff will therefore not change 
+    ; the value at the ROM address, even if the ROM chip is write-enabled. 
+    ; If the chip is write-protected, the write operation finishes
+    ; immediately, while it takes some duration to finish if the chip is
+    ; write-enabled. That way we can tell if the chip is write-enabled.
     lda #$01
     sta rom_target_bank
     lda #$ff
     sta rom_target_addr
     sta rom_target_addr+1
-    jmp rom_write
+    jmp rom_write ; that function returns C=1 if chip is write-protected
 .endproc
 
 ;******************************************************************************
