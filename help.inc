@@ -187,7 +187,7 @@ loop:
 
 ;******************************************************************************
 ; Function name.......: help_hide
-; Purpose.............: Hides the help screen and restores orignal screen
+; Purpose.............: Hides the help screen and restores original screen
 ;                       settings
 ; Input...............: Nothing
 ; Returns.............: Nothing
@@ -437,7 +437,9 @@ set_colors:
 
 ;******************************************************************************
 ; Function name.......: help_set_color
-; Purpose.............: Sets character color at specified location
+; Purpose.............: Sets character color at specified location. The color
+;                       is rotated between white, light-gray and gray for each
+;                       call to this function if C=0.
 ; Input...............: X = start column
 ;                       Y = start row
 ;                       A = length
@@ -461,7 +463,7 @@ set_colors:
     lda #%00000000
     sta VERA_ADDR2
 
-    ; Prepare loop
+    ; Prepare loop that updates character color
     ply ; length
     ldx help_cur_col
     
@@ -474,8 +476,8 @@ set_colors:
     dey
     bne :-
 
-    ; Increment color index
-    plp
+    ; Increment color index if C=0
+    plp ; Get C value
     bcs exit
 
     inx
@@ -490,26 +492,32 @@ exit:
 
 ;******************************************************************************
 ; Function name.......: help_print
-; Purpose.............: Prints text to help screen
+; Purpose.............: Prints null-terminated text to help screen
 ; Input...............: X = Pointer to string, low byte
 ;                       Y = Pointer to string, high byte
 ; Returns.............: Nothing
 .proc help_print
+    ; Select column 31
     lda #31*2
     sta VERA_ADDR0
+
+    ; Auto-increment 2
     lda #%00100000
     sta VERA_ADDR2
 
+    ; Setup text pointer
     stx tmp1
     sty tmp1+1
 
     ldy #0
 loop:
+    ; Get char
     lda (tmp1),y
     beq eoi
     cmp #13
     beq eol
 
+    ; Find PETSCII to screen code diff
     ldx #0
 :   cmp pet2scr_in,x
     bcc put
@@ -517,16 +525,19 @@ loop:
     bra :-
 
 put:
+    ; Convert from PETSCII to screen code
     adc pet2scr_adjust,x
     sta VERA_D0
     bra next
 
 eol:
+    ; Go to column 31 of next row
     lda #31*2
     sta VERA_ADDR0
     inc VERA_ADDR1
 
 next:
+    ; Increment text pointer
     iny
     bne loop
     inc tmp1+1
