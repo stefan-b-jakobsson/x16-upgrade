@@ -28,11 +28,11 @@ PROGRESS_SMC = 2
 
 ;******************************************************************************
 ; Function name.......: progress_init
-; Purpose.............: Inits progress meters
+; Purpose.............: Inits progress counters
 ; Prerequisite........: Call header_fetch
 ; Error...............: C=1 if end value is 0
 .proc progress_init
-    ; ROM
+    ; ROM progress counter
     ldx header_rom_size     ; Get size
     ldy header_rom_size+1
     lda header_rom_size+2
@@ -47,7 +47,7 @@ PROGRESS_SMC = 2
     sty progress_rom_step+1
     sta progress_rom_step+2
 
-    ; VERA
+    ; VERA progress counter
     ldx header_vera_size
     ldy header_vera_size+1
     lda header_vera_size+2
@@ -62,7 +62,7 @@ PROGRESS_SMC = 2
     sty progress_vera_step+1
     sta progress_vera_step+2
 
-    ; SMC
+    ; SMC progress counter
     ldx header_smc_size
     ldy header_smc_size+1
     lda #0
@@ -87,15 +87,14 @@ fail:
 
 ;******************************************************************************
 ; Function name.......: progress_select
-; Purpose.............: Selects one of the three progress meters
-; Input...............: A = progress meter:
+; Purpose.............: Selects one of the three progress counters
+; Input...............: A = progress counter type:
 ;                           0: ROM
 ;                           1: VERA
 ;                           2: SMC
 ; Returns.............: Nothing
 .proc progress_select
-    ldy #6
-
+    ; Check type
     cmp #PROGRESS_ROM
     bne :+
     ldx #6 ; Table index
@@ -107,16 +106,17 @@ fail:
     bra copy
 
 :   cmp #PROGRESS_SMC
-    bne exit
+    bne exit ; invalid type
     ldx #18 ; Table index
 
 copy:
-    ; Copy end value
-    lda progress_rom_end-1,x
+    ; Copy size/end
+    ldy #6
+:   lda progress_rom_end-1,x
     sta progress_cur_end-1,y
     dex
     dey
-    bne copy
+    bne :-
 
     ; Copy step value
     ldx #3
@@ -125,7 +125,7 @@ copy:
     dex
     bne :-
 
-    ; Setup, current progress 0 %
+    ; Setup, current progress = 0 %
     stz progress_cur_pct
 
 exit:
@@ -134,8 +134,8 @@ exit:
 
 ;******************************************************************************
 ; Function name.......: progress_step_value
-; Purpose.............: Calculates step 5% value, i.e. 5% of the specified
-;                       end value
+; Purpose.............: Calculates 5% step value, i.e. 5% of the specified
+;                       size/end value
 ; Input...............: X = End value, bits 0..7
 ;                       Y = End value, bits 8..15
 ;                       A = End value, bits 16..23
@@ -239,7 +239,8 @@ step:
 
 ;******************************************************************************
 ; Function name.......: progress_update
-; Purpose.............: Updates the current progess meter
+; Purpose.............: Updates the current progess counter, and prints
+;                       it to the screen
 ; Input...............: X = Cur value, bits 0..7
 ;                       Y = Cur value, bits 8..15
 ;                       A = Cur value, bits 16..23
