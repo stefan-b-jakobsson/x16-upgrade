@@ -45,10 +45,12 @@
     ; Else path too long
 
 cwd_overflow:
+    ; Current path doesn't fit in the buffer, abort
     ldx #str_cwd_overflow-str_cwd_readerr
     bra cwd_printerr
 
 cwd_readerr:
+    ; Current path read error, abort
     ldx #0
 
 cwd_printerr:
@@ -60,8 +62,8 @@ cwd_printerr:
 cwd_exit:
     rts
 
-    ; Clear screen
 clrscr:
+    ; Clear screen
     lda #$93
     jsr $ffd2
 
@@ -69,7 +71,7 @@ clrscr:
     lda #$8f
     jsr $ffd2
 
-    ; Select PETSCII upper case/graphics, and copy tile map to VERA address $00:$4000
+    ; Select PETSCII upper case/graphics, and copy tile map to VERA address $00:$4000, to be used by the help screen
     lda #$8e
     jsr $ffd2
 
@@ -130,10 +132,10 @@ clrscr:
     ; Check VERA JP1
     jsr screen7_show
 
-    ; Check ROM J1
+    ; Check ROM write protect jumper (J1)
     jsr rom_is_write_enabled
-    bcs :+
-    print 0, str_exit_j1
+    bcs :+ ; Jumper is not installed
+    print 0, str_exit_j1 ; Display recommendation to uninstall jumper
 
     ; Restore ROM bank
 :   pla
@@ -151,7 +153,7 @@ clrscr:
     sbc #$b0
     tax
     clc
-    jsr $fff0   ; Real PLOT
+    jsr $fff0   ; PLOT
 
     ; Quit program
     rts
