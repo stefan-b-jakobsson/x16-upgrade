@@ -110,7 +110,7 @@ SMC_RAM_BUF = $6100
     clc
     rts
 
-    ; Select SMC progress meter
+    ; Select SMC progress counter
 :   lda #PROGRESS_SMC
     jsr progress_select
 
@@ -227,7 +227,7 @@ t6:
     print 1, str_ok_cr
     bra t7
 
-:   ; Bootloader v2 + SMC firmware version 45.1.0 => Likely bad bootloader, otherwise low risk
+:   ; Bootloader v2 + SMC firmware version 45.1.0 => High risk of bad bootloader, otherwise low risk
     lda #45
     ldy #1
     ldx #0
@@ -307,7 +307,7 @@ fail:
     clc
     rts
 
-:   ; Disable interrupts
+:   ; Disable interrupts; interrupts can't be enabled after this point
     sei
     
     ; Print header
@@ -383,7 +383,7 @@ wait_key:
     lda #>SMC_RAM_BUF
     sta smc_src_addr+1
 
-    ; Select progress meter
+    ; Select progress counter
     lda #PROGRESS_SMC
     jsr progress_select
 
@@ -400,7 +400,7 @@ loop:
     beq complete
 
 send:
-    ; Transmit byte to bootloader
+    ; Transmit one byte to bootloader
     ldx #SMC_ADDR
     ldy #SMC_BOOTLOADER_TRANSMIT
     lda (smc_src_addr)
@@ -413,7 +413,7 @@ send:
     sta checksum
 
 commit:
-    ; At end of package?
+    ; At end of package (8 data bytes)?
     lda count
     and #7
     cmp #7
@@ -441,7 +441,7 @@ commit:
     dec attempts
     beq fail
     
-    ; Rewind source address to start of packet
+    ; Reset byte count
     sec
     lda count
     sbc #7
@@ -466,7 +466,7 @@ next:
     bne loop
     inc smc_src_addr+1
     
-    ; Update progress meter
+    ; Update progress counter
     ldx count
     ldy count+1
     lda #0
@@ -475,7 +475,7 @@ next:
     jmp loop
 
 complete:
-    ; Update progress meter
+    ; Update progress counter
     ldx count
     ldy count+1
     lda #0
@@ -546,13 +546,7 @@ attempts:
     rts
 
 :   ; Abort if bootloader version < 3, when support for verifying an update was added
-    lda smc_bootloader
-    cmp #$ff
-    bne :+
-    clc
-    rts
-
-:   cmp #3
+    cmp #3
     bcs :+
     clc
     rts
@@ -560,11 +554,11 @@ attempts:
 :   ; Print verifying message
     print 1, str5_smc_verify
 
-    ; Select progress meter
+    ; Select progress counter
     lda #PROGRESS_SMC
     jsr progress_select
 
-    ; Clear counter
+    ; Clear byte counter
     stz count
     stz count+1
 
@@ -661,7 +655,7 @@ done:
     jmp loop
 
 exit:
-    ; Update progress meter
+    ; Update progress counter
     jsr progress
     
     ; Return without errors
@@ -680,7 +674,7 @@ failed:
     rts
 
 progress:
-    ; Updates progress meter
+    ; Updates progress counter
     ldx count
     ldy count+1
     lda #0 ; MSB always 0 for the SMC
