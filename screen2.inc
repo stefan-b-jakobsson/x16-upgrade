@@ -28,13 +28,13 @@
 ; Input...............: Nothing
 ; Returns.............: Nothing
 .proc screen2_show
-    ; Check if VERA JP1 is installed - Prompt user to remove if so
+    ; Check if VERA JP1 is installed - Prompt user to remove it if so
     jsr screen7_show
     
     ; Clear and init widgets
     jsr widget_init
 
-    ; Print header
+    ; Print screen header
     jsr screen_header
 
     ; Print package information
@@ -77,7 +77,7 @@
 @5: plx
     print 0, str2_pkg_utc
     
-    ; Print header
+    ; Print package components header
     print 0, str2_pkg_components
 
     ; Print ROM version
