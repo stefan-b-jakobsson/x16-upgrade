@@ -28,7 +28,7 @@
 ; Input...............: Nothing
 ; Returns.............: Nothing
 .proc screen1_show
-    ; Check if VERA JP1 is installed - Prompt user to remove if so
+    ; Check if VERA JP1 is installed - Prompt user to remove it if so
     jsr screen7_show
 
     ; Clear and init widgets
