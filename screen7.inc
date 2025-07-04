@@ -25,11 +25,11 @@
 
 ;******************************************************************************
 ; Function name.......: screen7_show
-; Purpose.............: Shows screen 7 - Remove JP1
+; Purpose.............: Shows screen 7 - Prompt user to uninstall JP1
 ; Input...............: Nothing
 ; Returns.............: Nothing
 .proc screen7_show
-    ; Return if JP is not installed
+    ; Check if JP is installed - Return if not
     jsr vera_jedec
     bcc :+
     rts
@@ -67,7 +67,7 @@ listen:
     cpx #0
     bne :+
 
-    jsr vera_jedec  ; Exit if VERA JP1 is not installed
+    jsr vera_jedec  ; Check JP1 status: exit if uninstalled (C=1)
     bcc listen
     rts
 
