@@ -237,7 +237,7 @@ err:
     ; Abort if status is not VERA_STATUS_UPDATE_PASS
     lda vera_status
     cmp #VERA_STATUS_UPDATE_PASS
-    bne :+
+    beq :+
     clc
     rts
 
