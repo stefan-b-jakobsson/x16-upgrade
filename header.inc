@@ -74,7 +74,6 @@ HEADER_BLOB_SMC = 3
 ;                       - header_smc_size       3 bytes
 ;                       - header_smc_crc        2 bytes
 ;                       - header_smc_start      3 bytes
-;                       - header_file_size      3 bytes
 ;
 ;                       Header CRC-16:
 ;                       - header_crc1           1 byte
@@ -110,13 +109,7 @@ HEADER_BLOB_SMC = 3
     bcc :+              ; Read error?
     jmp load_err
 
-:   ; Get file size
-    jsr file_get_size
-    stx header_file_size
-    sty header_file_size+1
-    sta header_file_size+2
-
-    ; Store BLOB count
+:   ; Store BLOB count
     lda header_blob_count
     sta blobs
     lda header_blob_count+1
@@ -393,7 +386,5 @@ header_smc_ver:         .res 3
 header_smc_size:        .res 3
 header_smc_crc:         .res 2
 header_smc_start:       .res 3
-
-header_file_size:       .res 3
 
 header_cur_addr:        .res 3

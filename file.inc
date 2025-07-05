@@ -23,8 +23,8 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 FILE_NUM = 1        ; For reading file content
-FILE_CMD1 = 15      ; For get file size command
-FILE_CMD2 = 16      ; For file seek command
+FILE_CMD1 = 15      ; Used by CWD backup and restore
+FILE_CMD2 = 16      ; Used by file seek command
 FILE_DEVICE = 8
 
 ;******************************************************************************
@@ -300,105 +300,6 @@ batch_read: .res 1
     jsr CLOSE
     jsr CLRCHN
     rts
-.endproc
-
-;******************************************************************************
-; Function name.......: file_get_size
-; Purpose.............: Returns the size of the currently open file, read with
-;                       the DOS T (Tell) command
-; Input...............: Nothing
-; Returns.............: X/Y/A = File size (24 bits, low, mid, high)
-; Error...............: C=1 on error
-.proc file_get_size
-    ; Prepare DOS tell "T" command
-    ldx #<cmd
-    ldy #>cmd
-    lda #2
-    jsr SETNAM
-    
-    ; Send DOS tell command
-    lda #FILE_CMD1
-    ldx #FILE_DEVICE
-    ldy #15 ; Command channel
-    jsr SETLFS
-    jsr OPEN
-
-    ; Set as input
-    ldx #FILE_CMD1
-    jsr CHKIN
-
-    stz index
-loop:
-    jsr CHRIN ; Read char
-    pha
-    
-    jsr READST ; Check if done
-    bne eol
-    
-    pla ; Get char from stack
-
-    ldx index
-    
-    ; Store response code, 2 chars
-    cpx #2
-    bcs :+
-    sta code,x
-
-:   ; Store file size hex string value at byte index 12..19
-    cpx #12 
-    bcc next
-    cpx #20
-    bcs next
-    sta size-12,x
-
-next:
-    inc index
-    bra loop
-
-eol:
-    ; Get last char from stack
-    pla
-    
-    ; Set main file as input
-    ldx #FILE_NUM
-    jsr CHKIN 
-
-    ; Check response code
-    lda code
-    cmp #'0'
-    bne err
-    lda code+1
-    cmp #'7'
-    bne err
-
-    ; Set return values
-    ldx #<size
-    ldy #>size
-    jsr util_hex2bin
-    ldx r5
-    ldy r5+1
-    lda r5+2
-
-    clc
-    rts
-
-err:
-    sec
-    rts
-
-cmd:
-    .byt 't'
-    .byt 0
-
-index:
-    .res 1
-
-code:
-    .res 2
-
-size:
-    .res 8
-    .byt 0
 .endproc
 
 ;******************************************************************************
