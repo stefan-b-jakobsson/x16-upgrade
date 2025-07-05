@@ -223,7 +223,8 @@ str5_vera_header:
     .byt "VERA", 13, 0
 
 str5_vera_close_jp1:
-    .byt "Close JP1 on the VERA board", 13, 0
+    .byt "Close JP1 on the VERA board", 13
+    .byt "Press any key, F1 for help, ESC to abort", 13, 0
 
 str5_vera_erase:
     .byt "Erasing...", 0

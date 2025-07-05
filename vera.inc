@@ -90,7 +90,8 @@ VERA_BUF = $7f00
     bcs err
 
     ; Request user to close JP1
-:   print 1, str4_vera_close_jp1
+close_jp1:
+    print 1, str4_vera_close_jp1
 :   jsr util_wait_keypress
     cmp #$70 ; F1 key code
     beq :+
@@ -103,8 +104,8 @@ VERA_BUF = $7f00
     jsr help_jp1
     bra :--
 
-:   jsr vera_jedec
-    bcs :----
+:   jsr vera_jedec ; Check JP1 status
+    bcs close_jp1
     
     ; Chip ID is OK
     print 1, str4_vera_chip_ok
@@ -148,26 +149,23 @@ err:
     rts
 
     ; Ensure VERA JP1 is closed
-:   lda #10
-    sta max_attempts
 :   jsr vera_jedec
-    bcc :+++
+    bcc progress
+
     print 1, str5_vera_close_jp1
-    print 1, str_f1_help
 :   jsr util_wait_keypress
+    cmp #$6e ; ESC
+    beq err
     cmp #$70 ; F1
-    bne :+
+    bne :--
     jsr help_show
     sec
     jsr help_jp1
     bra :-
 
-:   dec max_attempts
-    bne :---
-    jmp err
-
-    ; Select progress meter
-:   lda #PROGRESS_VERA
+    ; Select progress counter
+progress:
+    lda #PROGRESS_VERA
     jsr progress_select
 
     ; Erase chip
@@ -176,11 +174,12 @@ err:
     jsr vera_wait_busy
     print 1, str_ok_cr
 
-    ; Setup
+    ; Setup target address
     stz vera_target_addr
     stz vera_target_addr+1
     stz vera_target_addr+2
 
+    ; Setup source address
     lda vera_buf_bank
     sta RAM_SEL
     lda vera_buf_addr
@@ -188,7 +187,7 @@ err:
     lda vera_buf_addr+1
     sta vera_src_addr+1
 
-    ; Print writing message
+    ; Print message "writing..."
     print 1, str5_vera_write
 
 loop:
@@ -196,7 +195,7 @@ loop:
     jsr vera_page_program
     bcs exit
 
-    ; Update progress meter
+    ; Update progress counter
     ldx vera_target_addr
     ldy vera_target_addr+1
     lda vera_target_addr+2
@@ -207,7 +206,7 @@ exit:
     ; Wait for last operation to finish
     jsr vera_wait_busy
 
-    ; Update progress meter
+    ; Update progress counter
     ldx vera_target_addr
     ldy vera_target_addr+1
     lda vera_target_addr+2
@@ -227,9 +226,6 @@ err:
     sta vera_status
     sec
     rts
-
-max_attempts:
-    .res 1
 .endproc
 
 ;******************************************************************************
@@ -238,28 +234,32 @@ max_attempts:
 ; Input...............: Nothing
 ; Returns.............: C=1 if verify failed
 .proc vera_verify
-    ; Abort if VERA not selected for update
+    ; Abort if status is not VERA_STATUS_UPDATE_PASS
     lda vera_status
-    cmp #VERA_STATUS_UNSELECTED
+    cmp #VERA_STATUS_UPDATE_PASS
     bne :+
     clc
     rts
 
     ; Ensure VERA JP1 is closed
-:   lda #10
-    sta max_attempts
 :   jsr vera_jedec
-    bcc :+
+    bcc :++
+
     print 1, str5_vera_close_jp1
     jsr util_wait_keypress
-    dec max_attempts
-    bne :-
+    cmp #$6e ; ESC
+    bne :+
     jmp err
+:   cmp #$70 ; F1
+    jsr help_show
+    sec
+    jsr help_jp1
+    bra :--
     
     ; Print message
 :   print 1, str5_vera_verify
     
-    ; Setup
+    ; Setup source pointer
     lda vera_buf_bank
     sta RAM_SEL
     lda vera_buf_addr
@@ -267,16 +267,17 @@ max_attempts:
     lda vera_buf_addr+1
     sta vera_src_addr+1
 
+    ; Clear byte count
     stz vera_count
     stz vera_count+1
     stz vera_count+2
 
+    ; Setup progress counter
     lda #PROGRESS_VERA
     jsr progress_select
 
-    ; Set VERA addr
+    ; Select VERA and init reading from address 0
     jsr vera_select
-
     ldx #0
     ldy #0
     lda #0
@@ -312,7 +313,7 @@ loop:
 :   inc vera_count
     bne :+
 
-    ldx vera_count
+    ldx vera_count      ; Update progress count on every 256 bytes
     ldy vera_count+1
     lda vera_count+2
     jsr progress_update
@@ -321,7 +322,7 @@ loop:
     bne :+
     inc vera_count+2
 
-    ; Check if done
+    ; Check if all firmware verified
 :   lda vera_count
     cmp header_vera_size
     bne loop
@@ -335,7 +336,7 @@ loop:
     ; Unselect VERA
     jsr vera_unselect
 
-    ; Progress, final update
+    ; Progress, final update to 100%
     ldx vera_count
     ldy vera_count+1
     lda vera_count+2
@@ -367,9 +368,6 @@ err:
     jsr vera_unselect
     sec
     rts
-
-max_attempts:
-    .res 1
 .endproc
 
 ;******************************************************************************
@@ -385,7 +383,7 @@ max_attempts:
     ; Print header
     print 1, str4_vera_loading
 
-    ; Setup progress meter
+    ; Setup progress counter
     lda #PROGRESS_VERA
     jsr progress_select
 
@@ -449,7 +447,7 @@ overflow:
     lda #>VERA_BUF
     sta vera_buf_addr+1
 
-    ; Downgrade ROM status from LOAD_PASS to PRECHECK_PASS, as we're overwriting the ROM image
+    ; Downgrade ROM status from LOAD_PASS to PRECHECK_PASS, as we're overwriting the ROM image buffer
     lda rom_status
     cmp #ROM_STATUS_LOAD_PASS
     bne load
@@ -615,8 +613,8 @@ callback:
 
 ;******************************************************************************
 ; Function name.......: vera_page_program
-; Purpose.............: Updates max 256 bytes of VERA flash memory. Programming 
-;                       is aborted if vera_target_addr LSB=0 or if it reaches 
+; Purpose.............: Updates max 256 bytes of VERA flash memory. Returns
+;                       on vera_target_addr LSB=0 or if source address reaches
 ;                       header_vera_size.
 ; Input...............: vera_target_addr = VERA flash memory target addr
 ;                       vera_src_addr = pointer to source data
