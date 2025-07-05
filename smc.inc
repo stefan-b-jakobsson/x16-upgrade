@@ -546,6 +546,7 @@ attempts:
     rts
 
 :   ; Abort if bootloader version < 3, when support for verifying an update was added
+    lda smc_bootloader
     cmp #3
     bcs :+
     clc
