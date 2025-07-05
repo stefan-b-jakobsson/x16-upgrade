@@ -44,9 +44,9 @@ WIDGET_STATE_SELECTED = 2
 
 ;******************************************************************************
 ; Function name.......: widget_add_button
-; Purpose.............: Adds a button at the cursor position
-; Input...............: X = String, LSB
-;                       Y = String, MSB
+; Purpose.............: Adds a button at the current cursor position
+; Input...............: X = String pointer, LSB
+;                       Y = String pointer, MSB
 ;                       A = String len
 ; Returns.............: X = Widget index
 ; Error...............: C=1 if could not add widget
@@ -134,11 +134,13 @@ off:
 ; Input...............: X = index of checkbox widget
 ; Returns.............: Nothing
 .proc widget_chkbox_toggle
+    ; Check that the selected widget is a checkbox
     lda widget_type,x
     cmp #WIDGET_TYPE_CHKBOX
     beq :+
     rts
 
+    ; Get current value, and toggle it
 :   lda widget_value,x
     bne off
 
@@ -180,18 +182,18 @@ show:
 .proc widget_set_state
     cpy #WIDGET_STATE_INACTIVE
     bne :+
-    lda #111
+    lda #111 ; Color
     bra cont
 
 :   cpy #WIDGET_STATE_ACTIVE
     bne :+
-    lda #97
+    lda #97 ; Color
     bra cont
 
 :   cpy #WIDGET_STATE_SELECTED
     bne exit
     stx widget_sel_index
-    lda #160
+    lda #160 ; Color
 
 cont:   
     ; Save color
@@ -221,6 +223,7 @@ exit:
 ; Input...............: Nothing
 ; Returns.............: Nothing
 .proc widget_next
+    ; Get index of next widget
     ldx widget_sel_index
     cpx widget_count
     bcc unselect
@@ -228,6 +231,7 @@ exit:
     bra select
 
 unselect:
+    ; Unselect current widget
     ldy #WIDGET_STATE_ACTIVE
     jsr widget_set_state
 
@@ -238,6 +242,7 @@ unselect:
     ldx #0
 
 select:
+    ; Select next widget
     stx widget_sel_index
     ldy #WIDGET_STATE_SELECTED
     jsr widget_set_state
@@ -250,6 +255,7 @@ select:
 ; Input...............: Nothing
 ; Returns.............: Nothing
 .proc widget_prev
+    ; Get index of previous widget
     ldx widget_sel_index
     cpx widget_count
     bcc unselect
@@ -257,6 +263,7 @@ select:
     bra select
 
 unselect:
+    ; Unselect current widget
     ldy #WIDGET_STATE_ACTIVE
     jsr widget_set_state
 
@@ -267,6 +274,7 @@ unselect:
     stx widget_sel_index
 
 select:
+    ; Select previous widget
     stx widget_sel_index
     ldy #WIDGET_STATE_SELECTED
     jsr widget_set_state
@@ -275,38 +283,41 @@ select:
 
 ;******************************************************************************
 ; Function name.......: widget_listen
-; Purpose.............: Listens for keyboard action, returns when Enter key
-;                       is pressed
+; Purpose.............: Listens for keyboard action; returns when Enter key
+;                       is pressed and the active widget is a button
 ; Input...............: Nothing
 ; Returns.............: X = Index of active widget on return
 .proc widget_listen
 loop:
+    ; Read keyboard
     jsr GETIN
     beq loop
 
-    cmp #9
+    cmp #9 ; tab
     beq @1
-    cmp #$1d
+    cmp #$1d ; right arrow
     bne @2
 @1: jsr widget_next
     bra loop
 
-@2: cmp #$18
+@2: cmp #$18 ; shift + tab
     beq @3
-    cmp #$9d
+    cmp #$9d ; left arrow
     bne @4 
 @3: jsr widget_prev
     bra loop
 
-@4: cmp #13
+@4: cmp #13 ; enter key
     bne loop
 
+    ; Enter key was pressed, get current widget index
     ldx widget_sel_index
-    
+
+    ; Check widget type
     lda widget_type,x
-    cmp #WIDGET_TYPE_BUTTON
+    cmp #WIDGET_TYPE_BUTTON ; A button => exit
     beq exit
-    cmp #WIDGET_TYPE_CHKBOX
+    cmp #WIDGET_TYPE_CHKBOX ; A checkbox => toggle it
     bne loop
     jsr widget_chkbox_toggle
     bra loop
