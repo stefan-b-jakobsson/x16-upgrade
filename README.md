@@ -56,7 +56,10 @@ are compatible with each other.
 You can create your own package file with tools included in this project:
 
 - Type ```make latest``` in the project root folder. This command downloads the latest
-releases of the ROM, the VERA and the SMC, and builds a package of them
+releases of the ROM, the VERA and the SMC, and builds a package of them. You can optionally
+specify the name of the creator of the package and a package description with
+the command line arguments "createdby" and "desc", for example like this:
+    - ```make latest createdby="My name" desc="My package description"```
 
 - Type ```make package```in the project root folder. This opens up a GUI interface
 that lets you select each of the three firmware files manually, and build a package

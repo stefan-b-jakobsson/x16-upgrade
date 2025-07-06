@@ -70,11 +70,12 @@ else:
 description = "X16 latest releases"
 createdby = "Unkown"
 
-for a in sys.argv:
-    if a.startswith("-createdby=") and len(a)>11:
-        createdby = a[11:]
-    elif a.startswith("-desc=") and len(a)>6:
-        description=a[6:]
+for i in range(0,len(sys.argv)):
+    if len(sys.argv) > i+1 and sys.argv[i+1].startswith("-") == False and len(sys.argv[i+1]) > 0:
+        if sys.argv[i] == "-createdby":
+            createdby = sys.argv[i+1]
+        if sys.argv[i] == "-desc":
+            description = sys.argv[i+1]
 
 x16pkg.make_pkg(description, createdby, "res/rom.bin", "res/vera.bin", "res/x16-smc.ino.hex", vera_real_version, smc_real_version, "build/x16-latest.pkg")
 print("Created package -> build/x16-latest.pkg")
