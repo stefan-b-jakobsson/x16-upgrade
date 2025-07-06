@@ -16,7 +16,7 @@ package:
 latest:
 	@mkdir -p $(BUILD_DIR)
 	@mkdir -p $(RES_DIR)
-	python script/latest.py
+	python script/latest.py -createdby=$(createdby) -desc=$(desc)
 
 # Clean
 clean:

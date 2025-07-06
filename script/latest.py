@@ -24,6 +24,7 @@
 
 # Python Standard Libraries
 import re
+import sys
 
 # Non-standard Libraries
 try:
@@ -66,5 +67,14 @@ else:
         smc_real_version[i] = int(smc_real_version[i])
 
 # Make package
-x16pkg.make_pkg("X16 Latest Official Releases", "X16 Community", "res/rom.bin", "res/vera.bin", "res/x16-smc.ino.hex", vera_real_version, smc_real_version, "build/x16-latest.pkg")
+description = "X16 latest releases"
+createdby = "Unkown"
+
+for a in sys.argv:
+    if a.startswith("-createdby=") and len(a)>11:
+        createdby = a[11:]
+    elif a.startswith("-desc=") and len(a)>6:
+        description=a[6:]
+
+x16pkg.make_pkg(description, createdby, "res/rom.bin", "res/vera.bin", "res/x16-smc.ino.hex", vera_real_version, smc_real_version, "build/x16-latest.pkg")
 print("Created package -> build/x16-latest.pkg")
