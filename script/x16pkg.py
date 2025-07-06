@@ -108,7 +108,7 @@ def get_vera_version(src):
 
 def make_pkg(pkg_info, pkg_created_by, rom_path, vera_path, smc_path, vera_version, smc_version, pkg_path):
     # Package file format version
-    pkg_version = 1
+    pkg_version = 2
 
     # Package timestamp (UTC)
     pkg_created_on = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
@@ -143,7 +143,7 @@ def make_pkg(pkg_info, pkg_created_by, rom_path, vera_path, smc_path, vera_versi
     # Create fix part of header
     header = bytearray()
 
-    header += petscii_encode("X16PKG")          # Magic string
+    header += petscii_encode("x16pkg")          # Magic string
 
     header.append(pkg_version)                  # Package file format version
 

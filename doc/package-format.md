@@ -17,8 +17,8 @@ it starts with the following fields, 103 bytes in total:
 
 | Offset | Size | Description                                    |
 |--------|------|------------------------------------------------|
-| $0000  | $06  | Magic string: X16PKG                           |
-| $0006  | $01  | Package file format version                    |
+| $0000  | $06  | Magic string: In version 1 "X16PKG" (hex d8 31 36 d0 cb c7), in version 2 "x16pkg" (hex 58 31 36 50 4b 47) |
+| $0006  | $01  | Package file format version (1 or 2)           |
 | $0007  | $40  | Package description, null-terminated           |
 | $0047  | $10  | Package created by, null-terminated            |
 | $0057  | $0E  | Package created on (UTC): "%Y%m%d%H%M%S"       |

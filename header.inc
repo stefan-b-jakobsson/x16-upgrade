@@ -309,14 +309,31 @@ cur_addr:
 t1: 
     ; Check magic string
     ldx #0
-:   lda magic,x
+
+    lda header_ver
+    cmp #2
+    bcs t1_m2
+
+t1_m1:
+    ; Magic string for package version 1
+:   lda magic_1,x
     beq t2
     cmp header_magic,x
-    bne :+
+    bne t1_err
     inx
     bra :-
 
-:   print 0,str1_header_magic_err
+t1_m2:
+    ; Magic string for package version 2 and above
+:   lda magic_2,x
+    beq t2
+    cmp header_magic,x
+    bne t1_err
+    inx
+    bra :-
+
+t1_err:
+    print 0,str1_header_magic_err
     sec
     rts
 
@@ -324,10 +341,10 @@ t2:
     ; Check package file version
     lda header_ver
     cmp #HEADER_MIN_VER
-    bcc t3
+    bcc :+
     cmp #HEADER_MAX_VER+1
-    bcc t3
-    print 0, str1_header_unsupported
+    bcc t3 ; ok
+:   print 0, str1_header_unsupported
     sec
     rts
 
@@ -348,8 +365,11 @@ pass:
     clc
     rts
 
-magic:
+magic_1:
     .byt "X16PKG",0
+
+magic_2:
+    .byt "x16pkg",0
 
 size:
     .res 3
