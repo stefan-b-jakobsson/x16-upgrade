@@ -195,10 +195,11 @@ cmd:
     ldy r1+1
     clc
     jsr MACPTR
-    bcs err
+    bcc :+ 
+    jmp err
 
     ; Check errors
-    jsr READST
+:   jsr READST
     sta status
     and #%10000010
     bne err
@@ -207,7 +208,15 @@ cmd:
     stx batch_read
 
     ; Update CRC
-    ldy #0
+    clc
+    lda r1
+    adc batch_read
+    lda r1+1
+    adc #0
+    cmp #$c0
+    bcc :+
+    dec RAM_SEL
+:   ldy #0
 :   lda (r1),y
     jsr crc16_update
     iny
@@ -249,6 +258,7 @@ cmd:
     bne :+
     lda #$a0
     sta r1+1
+    inc RAM_SEL
 
 :   jsr callback
 

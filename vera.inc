@@ -83,32 +83,40 @@ VERA_BUF = $7f00
     rts
 
 :   ; Print header
-    print 0, str4_vera
+    print 0, str_vera
+    
+    ; Ensure JP1 is open
+    sec ; abortable
+    jsr vera_select_sdcard
+    bcs err ; User aborted without opening JP1
+
+    ; Print loading message
+    print 1, str_loading
 
     ; Load VERA firmware
     jsr vera_load
-    bcs err
+    cmp #0
+    beq load_ok
+    cmp #2
+    beq crc_err
 
-    ; Request user to close JP1
-close_jp1:
-    print 1, str4_vera_close_jp1
-:   jsr util_wait_keypress
-    cmp #$70 ; F1 key code
-    beq :+
-    cmp #$6e ; ESC key code
-    beq err
-    bra :++
+    print 1, str_read_error
+    bra err
 
-:   jsr help_show
-    sec
-    jsr help_jp1
-    bra :--
+crc_err:
+    print 1, str_crc_error
+    bra err
 
-:   jsr vera_jedec ; Check JP1 status
-    bcs close_jp1
+load_ok:
+    print 1, str_ok_cr
+
+    ; Ensure JP1 is closed
+    sec ; make following prompt abortable
+    jsr vera_select_flash
+    bcs err ; User aborted without closing JP1
     
     ; Chip ID is OK
-    print 1, str4_vera_chip_ok
+    print 1, str_vera_chip_ok
 
     ; Return without error
     lda #VERA_STATUS_LOAD_PASS
@@ -131,48 +139,39 @@ err:
 ; Returns.............: Nothing
 ; Error...............: C=1 on error
 .proc vera_update
-    ; Abort if VERA not selected for update
+    ; Abort if VERA status is not VERA_LOAD_PASS
     lda vera_status
-    cmp #VERA_STATUS_UNSELECTED
-    bne :+
+    cmp #VERA_STATUS_LOAD_PASS
+    beq :+
     clc
     rts
 
 :   ; Print header
-    print 0, str5_vera_header
+    print 0, str_vera
 
-    ; Abort with error if status is not LOAD_PASS
-    lda vera_status
-    cmp #VERA_STATUS_LOAD_PASS
-    beq :+
-    sec
-    rts
+    ; Validate CRC-16 of the buffered new firmware
+    jsr vera_crc_validate
+    bcc :+ ; OK
+    
+    ; Load VERA again
+    clc ; Not user abortable
+    jsr vera_select_sdcard
+    print 1, str_loading
+    jsr vera_load
 
     ; Ensure VERA JP1 is closed
-:   jsr vera_jedec
-    bcc progress
-
-    print 1, str5_vera_close_jp1
-:   jsr util_wait_keypress
-    cmp #$6e ; ESC
-    beq err
-    cmp #$70 ; F1
-    bne :--
-    jsr help_show
-    sec
-    jsr help_jp1
-    bra :-
+:   clc ; Not user abortable
+    jsr vera_select_flash
 
     ; Select progress counter
-progress:
     lda #PROGRESS_VERA
     jsr progress_select
 
     ; Erase chip
-    print 1, str5_vera_erase
+    print 1, str_erasing
     jsr vera_chip_erase
     jsr vera_wait_busy
-    print 1, str_ok_cr
+    print 0, str_ok_cr
 
     ; Setup target address
     stz vera_target_addr
@@ -187,8 +186,8 @@ progress:
     lda vera_buf_addr+1
     sta vera_src_addr+1
 
-    ; Print message "writing..."
-    print 1, str5_vera_write
+    ; Print writing message
+    print 1, str_writing
 
 loop:
     ; Program page
@@ -242,22 +241,17 @@ err:
     rts
 
     ; Ensure VERA JP1 is closed
-:   jsr vera_jedec
-    bcc :++
-
-    print 1, str5_vera_close_jp1
-    jsr util_wait_keypress
-    cmp #$6e ; ESC
-    bne :+
-    jmp err
-:   cmp #$70 ; F1
-    jsr help_show
+:   clc ; following prompt not abortable
+    jsr vera_select_flash
+    bcc :+
+    print 1, str_aborted
+    lda #VERA_STATUS_VERIFY_FAIL
+    sta vera_status
     sec
-    jsr help_jp1
-    bra :--
+    rts
     
     ; Print message
-:   print 1, str5_vera_verify
+:   print 1, str_verifying
     
     ; Setup source pointer
     lda vera_buf_bank
@@ -322,7 +316,7 @@ loop:
     bne :+
     inc vera_count+2
 
-    ; Check if all firmware verified
+    ; Check if all of firmware verified
 :   lda vera_count
     cmp header_vera_size
     bne loop
@@ -345,27 +339,32 @@ loop:
     ; Print OK messages
     print 1, str_ok_cr
 
-    ; Request user to open VERA JP1
-:   print 1, str5_vera_open_jp1
-    print 1, str_f1_help
-:   jsr util_wait_keypress
-    cmp #$70 ; F1
-    bne :+
-    jsr help_show
-    clc
-    jsr help_jp1
-    bra :-
+    ; Ensure JP1 is open
+    clc ; user not allowed to abort
+    jsr vera_select_sdcard
 
-:   jsr vera_jedec
-    bcc :---
+    ; Set status
+    lda #VERA_STATUS_VERIFY_PASS
+    sta vera_status
 
     ; Return without error
     clc
     rts
 
 err:
+    ; Set status
+    lda #VERA_STATUS_VERIFY_FAIL
+    sta vera_status
+
+    ; Print fail message
     print 1, str_fail_cr
     jsr vera_unselect
+
+    ; Ensure JP1 is open
+    clc ; user not allowed to abort
+    jsr vera_select_sdcard
+
+    ; Return with error
     sec
     rts
 .endproc
@@ -378,10 +377,12 @@ err:
 ;                       buffer, otherwise at address VERA_BUF
 ; Input...............: Nothing
 ; Returns.............: Nothing
-; Error...............: C=1 on error
+; Error...............: A = 0   => OK
+;                           1   => Read error
+;                           2   => Checksum error
 .proc vera_load
-    ; Print header
-    print 1, str4_vera_loading
+    ; Reset CRC value
+    jsr crc16_init
 
     ; Setup progress counter
     lda #PROGRESS_VERA
@@ -492,16 +493,27 @@ load:
     jsr file_read
     bcs err
 
-    ; Exit without errors
     jsr file_close
-    print 1,str_ok_cr
-    clc
+    
+    ; Compare CRCs
+    lda crc16_val
+    cmp header_vera_crc
+    bne err2
+    lda crc16_val+1
+    cmp header_vera_crc+1
+    bne err2
+
+    ; Exit without errors
+    lda #0
     rts
 
 err:
     jsr file_close
-    print 1, str_fail_cr
-    sec
+    lda #1
+    rts
+
+err2:
+    lda #2
     rts
 
 callback:
@@ -516,6 +528,209 @@ callback:
     sbc r2+2
     jmp progress_update
 
+.endproc
+
+;******************************************************************************
+; Function name.......: vera_crc_validate
+; Purpose.............: Calculates VERA buffer CRC-16 checksum and verifies that
+;                       it matches the checksum stored in the header
+; Input...............: Nothing
+; Returns.............: C=0 OK
+;                       C=1 Checksum error
+.proc vera_crc_validate
+    ; Print message
+    print 1, str_validating
+
+    ; Setup progress counter
+    lda #PROGRESS_VERA
+    jsr progress_select
+
+    ; Calculate CRC for ROM buffer
+    lda vera_buf_addr
+    sta r1
+    lda vera_buf_addr+1
+    sta r1+1
+    lda vera_buf_bank
+    sta RAM_SEL
+    lda header_vera_size
+    sta r2
+    lda header_vera_size+1
+    sta r2+1
+    lda header_vera_size+2
+    sta r2+2
+    lda #<callback
+    sta r4
+    lda #>callback
+    sta r4+1
+    jsr crc16_buffer
+
+    ; Compare with header data
+    cpx header_vera_crc
+    bne err
+    cpy header_vera_crc+1
+    bne err
+    
+    ; Exit without error
+    print 1, str_ok_cr
+    clc
+    rts
+
+err:
+    print 1, str_crc_error
+    sec
+    rts
+
+callback:
+    ; Calculate number of bytes processed
+    sec
+    lda header_vera_size
+    sbc r2
+    tax
+    lda header_vera_size+1
+    sbc r2+1
+    tay
+    lda header_vera_size+2
+    sbc r2+2
+
+    ; Update progress counter
+    jmp progress_update
+.endproc
+
+
+;******************************************************************************
+; Function name.......: vera_select_sdcard
+; Purpose.............: Prompts user to remove JP1 to select the SD card
+; Input...............: C = 1   Allow user to abort
+; Returns.............: C = 0   OK, JP1 is closed
+;                       C = 1   User aborted, and JP1 is open
+.proc vera_select_sdcard
+    stz flags
+    bcc :+
+    inc flags
+
+    ; Print message
+:   print 1, str_vera_select_sdcard
+
+    jsr vera_jedec
+    bcc :+
+    
+    ; JP1 not installed, return with OK
+    jsr file_cwd_restore
+    print 0, str_ok_cr
+    clc
+    rts
+
+:   lda #13 ; Line break
+    jsr CHROUT
+
+loop:
+    ; Get JP1 status
+    jsr vera_jedec
+    bcs success
+    
+    ; Prompt user to open JP1
+    print 2, str_vera_open_jp1
+    lda flags
+    bne :+
+    print 2, str_f1_help
+    bra keypress
+:   print 2, str_f1_help_esc_abort
+
+keypress:
+    jsr util_wait_keypress
+    cmp #$70 ; F1
+    beq help
+    cmp #$6e ; ESC
+    bne loop
+
+abort:
+    lda flags
+    beq loop ; Not allowed to abort
+    print 2, str_aborted
+    sec
+    rts
+
+success:
+    jsr file_cwd_restore
+    print 2, str_ok_cr
+    clc
+    rts
+
+help:
+    jsr help_show
+    clc ; Help on opening JP1
+    jsr help_jp1
+    bra keypress
+
+flags:
+    .res 1
+.endproc
+
+;******************************************************************************
+; Function name.......: vera_select_flash
+; Purpose.............: Prompts user to install JP1 to select VERA flash
+; Input...............: C = 1   Allow user to abort
+; Returns.............: C = 0   OK, JP1 is open
+;                       C = 1   User aborted, and JP1 is closed
+.proc vera_select_flash
+    stz flags
+    bcc :+
+    inc flags
+
+    ; Print message
+:   print 1, str_vera_select_flash
+
+    jsr vera_jedec
+    bcs :+
+    
+    ; JP1 is installed, return with OK
+    print 0, str_ok_cr
+    clc
+    rts
+
+:   lda #13 ; Line break
+    jsr CHROUT
+
+loop:
+    ; Get JP1 status
+    jsr vera_jedec
+    bcc success
+    
+    ; Prompt user to close JP1
+    print 2, str_vera_close_jp1
+    lda flags
+    bne :+
+    print 2, str_f1_help
+    bra keypress
+:   print 2, str_f1_help_esc_abort
+
+keypress:
+    jsr util_wait_keypress
+    cmp #$70 ; F1
+    beq help
+    cmp #$6e ; ESC
+    bne loop
+
+abort:
+    lda flags
+    beq loop ; Not allowed to abort
+    print 2, str_aborted
+    sec
+    rts
+
+success:
+    print 2, str_ok_cr
+    clc
+    rts
+
+help:
+    jsr help_show
+    sec ; Help on closing JP1
+    jsr help_jp1
+    bra keypress
+
+flags:
+    .res 1
 .endproc
 
 ;******************************************************************************

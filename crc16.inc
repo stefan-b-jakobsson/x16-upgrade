@@ -78,4 +78,81 @@
 	rts
 .endproc
 
+;******************************************************************************
+; Function name.......: crc16_buffer
+; Purpose.............: Calculates CRC16 for the specified RAM buffer
+; Input...............: r1		Pointer to start of buffer
+;						r2/r3L	Buffer len
+;						r4		Callback pointer, or 0 if no callback
+; Returns.............: X/Y		CRC16 (low/high)
+; Error...............: None
+.proc crc16_buffer
+	jsr crc16_init
+
+loop:
+	; Check if done
+	lda r2
+	ora r2+1
+	ora r2+2
+	bne :+
+
+	; Yes, exit
+	jsr callback2			; Final callback
+	ldx crc16_val
+	ldy crc16_val+1
+	rts
+
+:	; Add next value
+	lda (r1)
+	jsr crc16_update
+
+	; Decrement byte count
+	lda r2
+	bne :++
+	lda r2+1
+	bne :+
+	dec r2+2
+:	dec r2+1
+:	dec r2
+
+	; Increment pointer
+	inc r1
+	bne callback
+	inc r1+1
+
+	; On overflow into I/O area, go to $01:$a000
+	lda r1+1
+	cmp #$9f
+	bne :+
+	lda #1
+	sta RAM_SEL
+	lda #$a0
+	sta r1+1
+	bra callback
+
+:	; On overflow into ROM, go to start of next RAM bank
+	cmp #$c0
+	bcc callback
+	inc RAM_SEL
+	lda #$a0
+	sta r1+1
+
+callback:
+	; Callbacks on every 256 byte
+	lda r2
+	bne loop
+
+	; Check if callback pointer is null
+	lda r4
+	ora r4+1
+	beq loop
+
+	; Jump to callback pointer
+	jsr callback2
+	bra loop
+callback2:
+	jmp (r4)
+	rts
+.endproc
+
 crc16_val: .res 2

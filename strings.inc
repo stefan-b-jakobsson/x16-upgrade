@@ -22,31 +22,9 @@
 ; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ; POSSIBILITY OF SUCH DAMAGE.
 
-; Header
-str_header: 
-    .byt 147, "X16 UPGRADE ", 0
-
-str_ok_cr:
-    .byt "OK", 13, 0
-
-str_fail_cr:
-    .byt "FAIL", 13, 0
-
-str_warn_cr:
-    .byt "WARN", 13, 0
-
-str_f1_help:
-    .byt "Press any key, F1 for help", 13, 0
-
-str_exit_j1:
-    .byt 13, 13, "It is advised that you remove the jumper at position J1 on the main board after turning off the computer. That will protect the ROM from unintentional change.", 13, 13, 0
-
-; Program Main: These strings must be stored in this order
-str_cwd_readerr:
-    .byt "error: could not read current path", 13, 0
-
-str_cwd_overflow:
-    .byt "error: current path too long", 13, 0
+; *********************************************************
+; Screens
+; *********************************************************
 
 ; Screen 1: Welcome
 str1_welcome: 
@@ -64,7 +42,7 @@ str1_header_magic_err:
     .byt 13,"UNRECOGNIZED FILE HEADER FORMAT ERROR", 0
 
 str1_header_crc_err:
-    .byt 13,"HEADER CRC-16 MISMATCH ERROR",0
+    .byt 13,"HEADER CRC-16 MISMATCH ERROR", 0
 
 str1_header_unsupported:
     .byt 13, "UNSUPPORTED PACKAGE FILE VERSION", 0
@@ -115,8 +93,8 @@ str2_btn_next_end:
 ; Screen3: Custom options
 
 str3_info:
-    .byt "Select components to upgrade", 13, 13
-    .byt "WARNING: Verify firmware compatibility manually.", 13, 13, 0
+    .byt "Select components to update", 13, 13
+    .byt "WARNING: Verify that selected firmware is compatible with firmware not updated.", 13, 13, 0
 
 str3_rom:
     .byt "ROM", 13, 0
@@ -141,70 +119,6 @@ str3_btn_ok_end:
 str4_header:
     .byt "PRE-UPGRADE CHECKS",13, 13, 0
 
-str4_rom:
-    .byt "ROM", 13, 0
-
-str4_rom_write_enabled:
-    .byt "Write-enabled...", 0
-
-str4_rom_chip_id:
-    .byt "Chip ID...", 0
-
-str4_rom_progress:
-    .byt "Loading... 0%", 0
-
-str4_smc:
-    .byt "SMC", 13, 0
-
-str4_smc_firmware:
-    .byt "Firmware...", 0
-
-str4_smc_firmware_unsupported:
-    .byt "Unsupported version", 13, 0
-
-str4_smc_write_enabled:
-    .byt "Write-enabled...", 0
-
-str4_smc_bootloader:
-    .byt "Bootloader...",0
-
-str4_smc_no_bootloader:
-    .byt "No bootloader", 13,0
-
-str4_smc_bootloader_unsupported:
-    .byt "Unsupported version", 13, 0
-
-str4_smc_bad_bootloader1:
-    .byt "Bad v2, low risk",13
-    .byt "Press F1 for help, ESC to abort, any other key to continue", 13, 0
-
-str4_smc_bad_bootloader2:
-    .byt "Bad v2, high risk",13
-    .byt "Press F1 for help, ESC to abort, any other key to continue", 13, 0
-
-str4_smc_bad_bootloader3:
-    .byt "Bad v2, confirmed",13
-    .byt "Press F1 for help, ESC to abort, any other key to continue", 13, 0
-
-str4_smc_unknown_bootloader:
-    .byt "Unknown version", 13, 0
-
-str4_smc_loading:
-    .byt "Loading... 0%",0
-
-str4_vera:
-    .byt "VERA", 13, 0
-
-str4_vera_loading:
-    .byt "Loading... 0%", 0
-
-str4_vera_close_jp1:
-    .byt "Close JP1 on the VERA board", 13
-    .byt "Press any key, F1 for help, ESC to abort", 13, 0
-
-str4_vera_chip_ok:
-    .byt "Chip ID... OK", 13, 0
-
 str4_btn_back:
     .byt "<Back>"
 str4_btn_back_end:
@@ -219,97 +133,19 @@ str4_btn_next_end:
 str5_header:
     .byt "INSTALLING UPDATES", 13, 13, 0
 
-str5_vera_header:
-    .byt "VERA", 13, 0
-
-str5_vera_close_jp1:
-    .byt "Close JP1 on the VERA board", 13
-    .byt "Press any key, F1 for help, ESC to abort", 13, 0
-
-str5_vera_erase:
-    .byt "Erasing...", 0
-
-str5_vera_write:
-    .byt "Writing... 0%", 0
-
-str5_vera_verify:
-    .byt "Verifying... 0%", 0
-
-str5_vera_open_jp1:
-    .byt "Open JP1 on the VERA board", 13, 0
-
-str5_rom_header:
-    .byt "ROM", 13, 0
-
-str5_rom_write_protected:
-    .byt "Chip is write protected", 13
-    .byt "Reinstall jumper at position J1", 13
-    .byt "Press any key to continue", 13, 0
-
-str5_rom_erase:
-    .byt "Erasing...", 0
-
-str5_rom_write:
-    .byt "Writing... 0%", 0
-
-str5_rom_verify:
-    .byt "Verifying... 0%", 0
-
-str5_smc_header:
-    .byt "SMC",13,0
-
-str5_smc_wait_key:
-    .byt "Press any key...",13,0
-
-str5_smc_start_bootloader:
-    .byt "Momentarily press Power+Reset", 13
-    .byt "at the same time... ", 0
-
-str5_smc_write:
-    .byt "Writing... 0%", 0
-
-str5_smc_verify:
-    .byt "Verifying... 0%", 0
-
-str5_smc_update_failed:
-    .byt "Update failed. Last err no: ", 0
-
-str5_smc_reset:
-    .byt "System shutdown... ", 0
-
-str5_smc_bootloader_v1:
-    .byt "Bootloader v1 detected. Disconnect "
-    .byt "the computer from mains power for at least 20 "
-    .byt "seconds to finish the update.", 0
-
-str5_smc_bad_bootloader:
-    .byt 13, 13, "Corrupted (bad) bootloader v2 detected. ", 13
-    .byt "DO NOT disconnect the computer from power. ", 13
-    .byt "Stand by for help... ", 0
-
-
 str5_reset_msg:
     .byt "System reset... ", 0
-
-str5_vera_failed:
-    .byt "The VERA update failed. The video output will probably not work if you reset or power cycle the computer. Try to update the VERA again.", 13, 0
-
-str5_rom_failed:
-    .byt "The ROM update failed. The chip must probably be restored with an external programmer.", 0
-
-str5_smc_failed:
-    .byt "The SMC update failed. If you have bootloader v3, it might be possible to do a recovery update of the SMC. Otherwise it must probably be restored with an external programmer.", 0
 
 
 ; Screen 6: Warning
 
 str6_disclaimer:
     .byt "DISCLAIMER", 13, 13
-    .byt "Interrupting or failing to complete the upgrade may render your X16 computer inoperable, "
+    .byt "Interrupting or failing to complete the update may render your X16 computer inoperable, "
     .byt "requiring external programming tools to recover it. The developers of this software are not liable " 
     .byt "for any damage that may result from its use.", 13, 13
     .byt "For additional information, please refer to the enclosed README file.", 13, 13
-    .byt "Press <Exit> to quit the program or <Install> to begin the upgrade.", 13, 13, 0
+    .byt "Press <Exit> to quit the program or <Install> to begin the update.", 13, 13, 0
 
 str6_btn_exit:
     .byt "<Exit>"
@@ -323,7 +159,7 @@ str6_btn_install_end:
 ; Screen 7: Remove JP1
 
 str7_header:
-    .byt "UNINSTALL VERA JP1", 13, 13, 0
+    .byt "UNINSTALL VERA JUMPER JP1", 13, 13, 0
 
 str7_jp1:
     .byt "Remove jumper JP1 on the VERA board to restore normal operation of the VERA and the SD card.", 13, 13, 0
@@ -336,26 +172,198 @@ str7_btn_help:
     .byt "<Help>"
 str7_btn_help_end:
 
-; Help screen
+; *********************************************************
+; Common strings
+; *********************************************************
 
+str_header: 
+    .byt 147, "X16 UPGRADE ", 0
+
+str_loading:
+    .byt "Loading... 0%", 0
+
+str_validating:
+    .byt "Validating data... 0%", 0
+
+str_erasing:
+    .byt "Erasing... ", 0
+
+str_writing:
+    .byt "Writing... 0%", 0
+
+str_verifying:
+    .byt "Verifying... 0%", 0
+
+str_ok_cr:
+    .byt "OK", 13, 0
+
+str_aborted:
+    .byt "Aborted", 13, 0
+
+str_fail_cr:
+    .byt "FAIL", 13, 0
+
+str_warn_cr:
+    .byt "WARN", 13, 0
+
+str_read_error:
+    .byt "Read error", 13, 0
+
+str_crc_error:
+    .byt "Checksum error", 13, 0
+
+str_update_fail:
+    .byt "Update failed.", 13, 0
+
+str_f1_help:
+    .byt "Press any key (F1 Help)", 13, 0
+
+str_f1_help_esc_abort:
+    .byt "Press any key (F1 Help, ESC Abort)", 13, 0
+
+; Program Main: These strings must be stored in this order
+str_cwd_readerr:
+    .byt "error: could not read current path", 13, 0
+
+str_cwd_overflow:
+    .byt "error: current path too long", 13, 0
+
+
+; *********************************************************
+; Strings relating the ROM
+; *********************************************************
+
+str_rom:
+    .byt "ROM", 13, 0
+
+str_rom_write_enabled:
+    .byt "Write-enabled...", 0
+
+str_rom_write_protected:
+    .byt "Chip is write protected", 13
+    .byt "Install jumper in position J1", 13
+    .byt "Press any key to continue", 13, 0
+
+str_rom_chip_id:
+    .byt "Chip ID...", 0
+
+str_rom_update_failed:
+    .byt "ROM update failed.", 13, 0
+
+str_rom_remove_j1:
+    .byt 13, 13, "Remove the jumper from position " , 34, "J1", 34, " on the main board to protect the ROM from unintentional change. It is recommended to do this after disconnecting the computer from power.", 13, 13, 0
+
+; *********************************************************
+; Strings relating to the VERA
+; *********************************************************
+
+str_vera:
+    .byt "VERA", 13, 0
+
+str_vera_chip_ok:
+    .byt "Chip ID... OK", 13, 0
+
+str_vera_select_sdcard:
+    .byt "Selecting SD card... ", 0
+
+str_vera_select_flash:
+    .byt "Selecting VERA flash... ", 0
+
+str_vera_open_jp1:
+    .byt "Remove jumper from position ", 34, "JP1", 34, " on the VERA board", 13, 0
+
+str_vera_close_jp1:
+    .byt "Install jumper in position ", 34, "JP1", 34, " on the VERA board", 13, 0
+
+
+; *********************************************************
+; Strings relating to the SMC
+; *********************************************************
+
+str_smc:
+    .byt "SMC", 13, 0
+
+str_smc_firmware:
+    .byt "Firmware...", 0
+
+str_smc_firmware_unsupported:
+    .byt "Unsupported version", 13, 0
+
+str_smc_write_enabled:
+    .byt "Write-enabled...", 0
+
+str_smc_bootloader:
+    .byt "Bootloader...",0
+
+str_smc_no_bootloader:
+    .byt "No bootloader", 13,0
+
+str_smc_bootloader_unsupported:
+    .byt "Unsupported version", 13, 0
+
+str_smc_bad_bootloader1:
+    .byt "Bad v2, low risk",13, 0
+
+str_smc_bad_bootloader2:
+    .byt "Bad v2, high risk",13, 0
+
+str_smc_bad_bootloader3:
+    .byt "Bad v2, confirmed",13, 0
+
+str_smc_unknown_bootloader:
+    .byt "Unknown version", 13, 0
+
+str_smc_wait_key:
+    .byt "Press any key...",13,0
+
+str_smc_start_bootloader:
+    .byt "Momentarily press Power+Reset", 13
+    .byt "at the same time... ", 0
+
+str_smc_update_failed:
+    .byt "Update failed. Last err: ", 0
+
+str_smc_reset:
+    .byt "System shutdown... ", 0
+
+str_smc_bootloader_v1:
+    .byt 13, "Bootloader v1 detected. Disconnect "
+    .byt "the computer from power for at least 20 "
+    .byt "seconds to finish the update.", 0
+
+str_smc_bad_bootloader:
+    .byt 13, "Corrupted (bad) bootloader v2 detected. ", 13
+    .byt "DO NOT disconnect the computer from power. ", 13
+    .byt "Stand by for help... ", 0
+
+; *********************************************************
+; Help screens
+; *********************************************************
 str_hlp_j1_close:
     .byt "rom chip write-protected", 13
     .byt $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, 13, 13
     .byt "the rom chip is currently write-", 13
     .byt "protected.", 13, 13
+
     .byt "to write-enable the rom chip,", 13
-    .byt "place a jumper over the pins at", 13
-    .byt "position ", 34, "j1", 34, ".", 13, 13
+    .byt "install a jumper in position", 13
+    .byt 34, "j1", 34, ".", 13, 13
+
     .byt "it is advised that you unplug the", 13
     .byt "computer from mains power before", 13
     .byt "installing the jumper.", 13, 13, 13
+    
     .byt "press any key", 0
 
 str_hlp_jp1_close:
-    .byt "vera write-protected", 13
-    .byt $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, 13, 13
-    .byt "connect the pins at position", 13
-    .byt 34, "jp1", 34, " to write-enable the vera.", 13
+    .byt "select vera flash", 13
+    .byt $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, 13, 13
+    .byt "the program needs to access the", 13
+    .byt "vera flash memory.", 13, 13
+
+    .byt "install a jumper in position",13
+    .byt 34, "jp1", 34, " on the vera board.", 13, 13
+
     .byt "this must be done without turning", 13
     .byt "off the computer or this program.", 13, 13
     .byt "avoid touching any of the", 13
@@ -363,14 +371,17 @@ str_hlp_jp1_close:
     .byt "press any key", 0
 
 str_hlp_jp1_open:
-    .byt "restore vera to normal operation", 13
-    .byt $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, 13, 13
-    .byt "the vera and sd card do not work", 13
-    .byt "when the pins at position ", 34, "jp1", 34, 13
-    .byt "are connected.", 13, 13
-    .byt "remove the jumper placed there",13
-    .byt "without turning off the computer",13
-    .byt "or this program.", 13, 13
+    .byt "vera default operation", 13
+    .byt $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, $63, 13, 13
+    .byt "the vera and the sd card are",13
+    .byt "currently disabled.", 13, 13
+
+    .byt "remove the jumper from position", 13
+    .byt 34, "jp1", 34, " on the vera board to", 13
+    .byt "restore normal operation", 13, 13
+
+    .byt "this must be done without turning", 13
+    .byt "off the computer or this program.", 13, 13
     .byt "avoid touching any of the", 13
     .byt "components on the vera board.", 13, 13, 13
     .byt "press any key", 0

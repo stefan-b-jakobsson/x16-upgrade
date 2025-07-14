@@ -68,8 +68,18 @@ listen:
     bne :+
 
     jsr vera_jedec  ; Check JP1 status: exit if uninstalled (C=1)
-    bcc listen
+    bcc activate_help_btn
     rts
+
+activate_help_btn:
+    ldx #0
+    ldy #WIDGET_STATE_ACTIVE
+    jsr widget_set_state
+    
+    ldx #1
+    ldy #WIDGET_STATE_SELECTED
+    jsr widget_set_state
+    bra listen
 
     ; Help button?
 :   cpx #1

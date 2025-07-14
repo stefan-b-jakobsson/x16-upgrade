@@ -115,11 +115,11 @@ SMC_RAM_BUF = $6100
     jsr progress_select
 
     ; Print title
-    print 0, str4_smc
+    print 0, str_smc
 
 t1:
     ; Test 1: Firmware version (>= SMC_MIN_VERSION)
-    print 1, str4_smc_firmware
+    print 1, str_smc_firmware
     lda smc_cur_version
     cmp #SMC_MIN_VERSION
     bcc :+
@@ -130,7 +130,7 @@ t1:
 
 :   ; t1: Fail
     print 1, str_fail_cr
-    print 2, str4_smc_firmware_unsupported
+    print 2, str_smc_firmware_unsupported
     jmp fail
 
 t2:
@@ -142,7 +142,7 @@ t2:
     bcc t3
 
     ; SMC firmware is >= 47.2.4, continue
-    print 1, str4_smc_write_enabled
+    print 1, str_smc_write_enabled
 
     ; Read SMC extended fuse (efuse)
     ldx #SMC_ADDR
@@ -161,14 +161,14 @@ t2:
 
 t3: 
     ; Test 3: Bootloader installed
-    print 1, str4_smc_bootloader
+    print 1, str_smc_bootloader
 
     lda smc_bootloader
     bne t4
     
     ; Test 3, fail
     print 1, str_fail_cr
-    print 2, str4_smc_no_bootloader
+    print 2, str_smc_no_bootloader
     jmp fail
 
 t4:
@@ -181,7 +181,7 @@ t4:
 
     ; t4: Fail
     print 1, str_fail_cr
-    print 2, str4_smc_bootloader_unsupported
+    print 2, str_smc_bootloader_unsupported
     jmp fail
 
 t5: 
@@ -202,7 +202,8 @@ t5:
 :   cmp #1  ; Known bad bootloader
     bne :+
     print 1, str_warn_cr
-    print 2, str4_smc_bad_bootloader3
+    print 2, str_smc_bad_bootloader3
+    print 2, str_f1_help_esc_abort
     jsr util_wait_keypress
     jsr help_show
     lda #3
@@ -214,7 +215,7 @@ t5:
     jmp t7
 
 :   print 1, str_warn_cr
-    print 2, str4_smc_unknown_bootloader
+    print 2, str_smc_unknown_bootloader
     bra t7
 
 t6: 
@@ -237,7 +238,8 @@ t6:
     ; High risk
 t6h:
     print 1, str_warn_cr
-    print 2, str4_smc_bad_bootloader2
+    print 2, str_smc_bad_bootloader2
+    print 2, str_f1_help_esc_abort
 :   jsr util_wait_keypress
     
     cmp #$70 ; f1
@@ -254,7 +256,8 @@ t6h:
     ; Low risk
 t6l:
     print 1, str_warn_cr
-    print 2,str4_smc_bad_bootloader1
+    print 2, str_smc_bad_bootloader1
+    print 2, str_f1_help_esc_abort
 :   jsr util_wait_keypress
     
     cmp #$70 ; f1
@@ -269,14 +272,28 @@ t6l:
 
 t7:
     ; Test 7: Load SMC firmware into RAM buffer
-    print 1, str4_smc_loading
-    jsr smc_load
+    sec ; Following prompt abortable
+    jsr vera_select_sdcard
     bcc :+
-
-    print 1, str_fail_cr
+    print 1,str_aborted
     bra fail
 
-:   print 1, str_ok_cr
+:   print 1, str_loading
+    jsr smc_load
+    cmp #0
+    beq t7_ok
+    cmp #2
+    beq t7_crc_err
+
+    print 1, str_read_error
+    bra fail
+
+t7_crc_err:
+    print 1, str_crc_error
+    bra fail
+
+t7_ok:
+    print 1, str_ok_cr
     
 exit:
     ; Return without error
@@ -287,9 +304,9 @@ exit:
 
 fail:
     ; Return with error code
-    sec
     lda #SMC_STATUS_PRECHECK_FAIL
     sta smc_status
+    sec
     rts
 .endproc
 
@@ -311,15 +328,26 @@ fail:
     sei
     
     ; Print header
-    print 0, str5_smc_header
+    print 0, str_smc
+
+    ; Validate SMC data buffer
+    jsr smc_crc_validate
+    bcc wait_key ; OK
+
+    ; Validate failed, exit with error
+    print 1, str_update_fail
+    lda #SMC_STATUS_UPDATE_FAIL
+    sta smc_status
+    sec
+    rts
 
 wait_key:
     ; Wait for key
-    print 1, str5_smc_wait_key
+    print 1, str_smc_wait_key
     jsr util_wait_keypress
 
     ; Start bootloader
-    print 1, str5_smc_start_bootloader
+    print 1, str_smc_start_bootloader
     ldx #SMC_ADDR
     ldy #SMC_BOOTLOADER_START
     lda #$31 ; Magic value required by this SMC command
@@ -388,7 +416,7 @@ wait_key:
     jsr progress_select
 
     ; Print write message
-    print 1, str5_smc_write
+    print 1, str_writing
 
 loop:
     ; At end of stream?
@@ -493,7 +521,7 @@ complete:
 fail:
     ; Print fail message
     pha
-    print 1, str5_smc_update_failed
+    print 1, str_smc_update_failed
     pla
 
     ; Print last error code
@@ -553,7 +581,7 @@ attempts:
     rts
 
 :   ; Print verifying message
-    print 1, str5_smc_verify
+    print 1, str_verifying
 
     ; Select progress counter
     lda #PROGRESS_SMC
@@ -686,6 +714,69 @@ ee_rdy: .res 2
 .endproc
 
 ;******************************************************************************
+; Function name.......: smc_crc_validate
+; Purpose.............: Calculates SMC buffer CRC-16 checksum and verifies that
+;                       it matches the checksum stored in the header
+; Input...............: Nothing
+; Returns.............: C=0 OK
+;                       C=1 Checksum error
+.proc smc_crc_validate
+    ; Print message
+    print 1, str_validating
+
+    ; Setup progress counter
+    lda #PROGRESS_SMC
+    jsr progress_select
+
+    ; Calculate CRC for ROM buffer
+    lda #<SMC_RAM_BUF
+    sta r1
+    lda #>SMC_RAM_BUF
+    sta r1+1
+    lda header_smc_size
+    sta r2
+    lda header_smc_size+1
+    sta r2+1
+    stz header_rom_size+2
+    lda #<callback
+    sta r4
+    lda #>callback
+    sta r4+1
+    jsr crc16_buffer
+
+    ; Compare with header data
+    cpx header_smc_crc
+    bne err
+    cpy header_smc_crc+1
+    bne err
+    
+    ; Exit without error
+    print 1, str_ok_cr
+    clc
+    rts
+
+err:
+    print 1, str_crc_error
+    sec
+    rts
+
+callback:
+    ; Calculate number of bytes processed
+    sec
+    lda header_smc_size
+    sbc r2
+    tax
+    lda header_smc_size+1
+    sbc r2+1
+    tay
+    lda header_smc_size+2
+    sbc r2+2
+
+    ; Update progress counter
+    jmp progress_update
+.endproc
+
+;******************************************************************************
 ; Function name.......: smc_reboot
 ; Purpose.............: Resets the SMC, which will reboot the system
 ; Input...............: Nothing
@@ -707,10 +798,10 @@ ee_rdy: .res 2
     ; Advise user to remove J1 jumper
     jsr rom_is_write_enabled
     bcs :+
-    print 1, str_exit_j1
+    print 1, str_rom_remove_j1
 
     ; Wait 20 seconds
-:   print 1, str5_smc_reset
+:   print 1, str_smc_reset
     lda #20
     ldx #0
     ldy #0  
@@ -726,7 +817,7 @@ ee_rdy: .res 2
     jsr util_delay_1s
 
     ; We're still alive, consequently the bad bootloader v2
-    print 1, str5_smc_bad_bootloader
+    print 1, str_smc_bad_bootloader
     lda #9
     ldx #0
     ldy #0
@@ -742,7 +833,7 @@ bootloader_v1:
     jsr I2C_WRITE_BYTE
 
     ; Print message and wait until computer is power cycled
-    print 1, str5_smc_bootloader_v1
+    print 1, str_smc_bootloader_v1
 :   bra :-
 .endproc
 
@@ -751,9 +842,13 @@ bootloader_v1:
 ; Purpose.............: Loads new SMC firmware from data file into RAM buffer
 ;                       at address SMC_RAM_BUF
 ; Input...............: Nothing
-; Returns.............: Nothing
-; Error...............: C=1 if load failed
+; Returns.............: A = 0   => OK
+;                           1   => Read error
+;                           2   => Checksum error
 .proc smc_load
+    ; Reset CRC
+    jsr crc16_init
+
     ; Open file and seek start of SMC firmware
     lda header_smc_start
     sta r1
@@ -767,9 +862,6 @@ bootloader_v1:
     lda file_name_len
     jsr file_open_and_seek
     bcs err
-
-    ; Reset CRC
-    jsr crc16_init
 
     ; Read firmware from file
     lda #<SMC_RAM_BUF
@@ -795,19 +887,23 @@ bootloader_v1:
     ; Compare CRCs
     lda crc16_val
     cmp header_smc_crc
-    bne err
+    bne err2
     lda crc16_val+1
     cmp header_smc_crc+1
-    bne err
+    bne err2
 
     ; Return without errors
-    clc
+    lda #0
     rts
 
     ; CRC mismatch
 err:
     jsr file_close
-    sec
+    lda #1
+    rts
+
+err2:
+    lda #2
     rts
 
 progress:

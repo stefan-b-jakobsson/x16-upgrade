@@ -135,7 +135,7 @@ clrscr:
     ; Check ROM write protect jumper (J1)
     jsr rom_is_write_enabled
     bcs :+ ; Jumper is not installed
-    print 0, str_exit_j1 ; Display recommendation to uninstall jumper
+    print 0, str_rom_remove_j1 ; Display recommendation to uninstall jumper
 
     ; Restore ROM bank
 :   pla

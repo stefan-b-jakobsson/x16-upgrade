@@ -39,29 +39,30 @@
     ; Update VERA
 install_vera:
     jsr vera_update
-    bcs fail_vera
+    bcs :+
     jsr vera_verify
-    bcs fail_vera
+    bcc install_rom
+:   rts ; Exit program on unsuccessful update
 
     ; Update Kernal ROM
 install_rom:
     jsr rom_update
-    bcs fail_rom
+:   bcs :- ; Infinite loop on unsuccessful update
     jsr rom_verify
-    bcs fail_rom
+    bcs :- ; Infinite loop on unsuccessful update
 
     ; Update SMC
 install_smc:
     jsr smc_update
-    bcs fail_smc
+:   bcs :- ; Infinite loop on unsuccessful update
     jsr smc_verify
-    bcs fail_smc
+:   bcs :- ; Infinite loop on unsuccessful update
     jsr smc_reboot
 
-    ; Reset computer after countdown. If SMC is updated; the smc_reboot function will turn off the computer
+    ; Reset computer after countdown. If SMC is updated, the smc_reboot function will turn off the computer
     jsr rom_is_write_enabled
     bcs :+
-    print 0, str_exit_j1
+    print 0, str_rom_remove_j1
 
 :   print 0, str5_reset_msg
 
@@ -73,18 +74,5 @@ install_smc:
     ; Jump to reset vector
     stz ROM_SEL
     jmp ($fffc)
-
-fail_vera:
-    print 1, str5_vera_failed
-    rts
-
-fail_rom:
-    print 1, str5_rom_failed
-:   bra :-
-
-fail_smc:
-    print 1, str5_smc_failed
-:   bra :-
-
 .endproc
 

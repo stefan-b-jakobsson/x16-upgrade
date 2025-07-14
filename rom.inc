@@ -64,7 +64,7 @@ ROM_MAX_ATTEMPTS = 10
 ; Returns.............: Nothing
 ; Error...............: C=1 on error
 .proc rom_run_prechecks
-    ; Abort if ROM is unselected
+    ; Abort if ROM is not selected for update
     lda rom_status
     cmp #ROM_STATUS_UNSELECTED
     bne :+
@@ -72,7 +72,7 @@ ROM_MAX_ATTEMPTS = 10
     rts
 
     ; Print header
-:   print 0, str4_rom
+:   print 0, str_rom
 
     ; Disable interrupts
     php
@@ -80,7 +80,7 @@ ROM_MAX_ATTEMPTS = 10
 
 t1:
     ; Test 1: Chip write-enabled
-    print 1, str4_rom_write_enabled
+    print 1, str_rom_write_enabled
     jsr rom_is_write_enabled
     bcs :+ ; Not write enabled
     
@@ -100,7 +100,7 @@ t1:
     
 t2:
     ; Test 2: Check chip ID
-    print 1, str4_rom_chip_id
+    print 1, str_rom_chip_id
     jsr rom_read_chip_id
     cpx #<ROM_CHIP_ID
     bne :+
@@ -117,15 +117,27 @@ t2:
 
 t3: 
     ; Test 3: Try to load ROM from package file
-    jsr rom_load
-    bcc :+
+    sec ; Allow user to abort
+    jsr vera_select_sdcard
+    bcs fail
 
-    ; Test 3, failed
-    print 1, str_fail_cr
+    jsr rom_load
+    cmp #0
+    beq t3_ok
+    cmp #2
+    beq t3_crc_err
+
+    ; Test 3, read error
+    print 1, str_read_error
+    bra fail
+
+t3_crc_err:
+    print 1, str_crc_error
     bra fail
 
     ; Test 3, OK
-:   print 1, str_ok_cr
+t3_ok:
+   print 1, str_ok_cr
 
 pass:
     ; Restore IRQ flag
@@ -135,7 +147,7 @@ pass:
     lda #ROM_STATUS_LOAD_PASS
     sta rom_status
 
-    ; Set return values
+    ; Return without error
     clc
     rts
 
@@ -147,7 +159,7 @@ fail:
     lda #ROM_STATUS_PRECHECK_FAIL
     sta rom_status
 
-    ; Set return values
+    ; Return with error
     sec
     rts
 .endproc
@@ -173,27 +185,51 @@ fail:
     rts
 
     ; Print header
-:   print 0, str5_rom_header
+:   print 0, str_rom
 
-    ; Load ROM from file, if necessary
     lda rom_status
     cmp #ROM_STATUS_LOAD_PASS
-    beq :+ ; yes, it's already loaded
-    jsr rom_load
-    bcc :+ ; load succeed
+    bne load
 
-    ; Abort, loading ROM failed
-    lda #ROM_STATUS_LOAD_FAIL
+    ; ROM image already loaded into RAM, verify buffer checksum
+    jsr rom_crc_validate
+    bcc j1 ; Checksum OK, continue, else fallthrough to load
+
+    ; Load ROM from file, if necessary
+load:
+    clc ; Following prompt not abortable
+    jsr vera_select_sdcard
+    jsr rom_load
+    cmp #0
+    beq ok_msg
+    cmp #2
+    beq crc_err
+
+    ; Read error
+    print 1, str_read_error
+    bra abort
+
+crc_err:
+    print 1, str_crc_error
+
+abort:
+    print 1,str_aborted
+    lda #ROM_STATUS_UPDATE_FAIL
     sta rom_status
     sec
     rts
 
+ok_msg:
+    print 1, str_ok_cr
+
+j1: 
     ; Check that jumper at position J1 on the main board is still installed (also verified during pre-checks)
-:   jsr rom_is_write_enabled
+    jsr rom_is_write_enabled
     bcc :+ ; yes
-    print 1, str5_rom_write_protected
+    
+    print 1, str_rom_write_protected
     jsr util_wait_keypress
-    bra :-
+    bra j1
 
     ; Disable interrupts, shouldn't be re-enabled after this point
 :   sei
@@ -220,12 +256,12 @@ fail:
     sta attempts
 
     ; Chip erase
-    print 1, str5_rom_erase
+    print 1, str_erasing
     jsr rom_erase
-    print 1, str_ok_cr
+    print 0, str_ok_cr
 
     ; Write loop
-    print 1, str5_rom_write
+    print 1, str_writing
 
 loop:
     ; Write one byte to ROM
@@ -234,12 +270,7 @@ loop:
     bcc :+ ; succeded
     dec attempts ; try again
     bne loop
-    
-    ; Report write error after ROM_MAX_ATTEMPTS
-    lda #ROM_STATUS_UPDATE_FAIL
-    sta rom_status
-    sec
-    rts
+    bra fail
 
     ; Reset attempts counter
 :   lda #ROM_MAX_ATTEMPTS
@@ -308,6 +339,16 @@ exit:
     clc
     rts
 
+fail:
+    ; Report write error after ROM_MAX_ATTEMPTS
+    lda #ROM_STATUS_UPDATE_FAIL
+    sta rom_status
+    print 0, str_fail_cr
+    print 1, str_rom_update_failed
+    stz ROM_SEL
+    sec
+    rts
+
 count: .res 3
 attempts: .res 1
 .endproc
@@ -326,7 +367,7 @@ attempts: .res 1
     rts
 
     ; Print header
-:   print 1, str5_rom_verify
+:   print 1, str_verifying
     
     ; Setup
     stz ROM_SEL
@@ -441,8 +482,9 @@ count: .res 3
 ; Function name.......: rom_load
 ; Purpose.............: Loads the ROM
 ; Input...............: Nothing
-; Returns.............: Nothing
-; Errors..............: C=1 on error
+; Returns.............: A = 0   => OK
+;                           1   => Read error
+;                           2   => Checksum error
 .proc rom_load
     ; Reset CRC value
     jsr crc16_init
@@ -452,7 +494,7 @@ count: .res 3
     jsr progress_select
 
     ; Print header
-    print 1, str4_rom_progress
+    print 1, str_loading
 
     ; Open file and seek start of ROM firmware
     lda header_rom_start
@@ -489,20 +531,97 @@ count: .res 3
     ; Close file
     jsr file_close
 
-    ; Return with error
-    clc
+    ; Validate CRC-16
+    lda crc16_val
+    cmp header_rom_crc
+    bne err2
+    lda crc16_val+1
+    cmp header_rom_crc+1
+    bne err2
+
+    ; Return with no error
+    lda #0
     rts
 
 err:
     ; Close file
     jsr file_close
 
-    ; Return with error
-    sec
+    ; Return with read error
+    lda #1
+    rts
+
+err2:
+    ; Return with checksum error
+    lda #2
     rts
 
 callback:
     ; Calculate number of bytes loaded
+    sec
+    lda header_rom_size
+    sbc r2
+    tax
+    lda header_rom_size+1
+    sbc r2+1
+    tay
+    lda header_rom_size+2
+    sbc r2+2
+
+    ; Update progress counter
+    jmp progress_update
+.endproc
+
+;******************************************************************************
+; Function name.......: rom_crc_validate
+; Purpose.............: Calculates ROM buffer CRC-16 checksum and verifies it
+;                       matches the checksum stored in the header
+; Input...............: Nothing
+; Returns.............: C=0 OK
+;                       C=1 Checksum error
+.proc rom_crc_validate
+    ; Print message
+    print 1, str_validating
+
+    ; Setup progress counter
+    lda #PROGRESS_ROM
+    jsr progress_select
+
+    ; Calculate CRC for ROM buffer
+    lda #<ROM_BUF
+    sta r1
+    lda #>ROM_BUF
+    sta r1+1
+    lda header_rom_size
+    sta r2
+    lda header_rom_size+1
+    sta r2+1
+    lda header_rom_size+2
+    sta r2+2
+    lda #<callback
+    sta r4
+    lda #>callback
+    sta r4+1
+    jsr crc16_buffer
+
+    ; Compare with header data
+    cpx header_rom_crc
+    bne err
+    cpy header_rom_crc+1
+    bne err
+    
+    ; Exit without error
+    print 1, str_ok_cr
+    clc
+    rts
+
+err:
+    print 1, str_crc_error
+    sec
+    rts
+
+callback:
+    ; Calculate number of bytes processed
     sec
     lda header_rom_size
     sbc r2
