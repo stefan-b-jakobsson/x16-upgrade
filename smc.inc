@@ -728,7 +728,7 @@ ee_rdy: .res 2
     lda #PROGRESS_SMC
     jsr progress_select
 
-    ; Calculate CRC for ROM buffer
+    ; Calculate CRC for SMC firmware buffer
     lda #<SMC_RAM_BUF
     sta r1
     lda #>SMC_RAM_BUF

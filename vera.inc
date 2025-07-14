@@ -545,7 +545,7 @@ callback:
     lda #PROGRESS_VERA
     jsr progress_select
 
-    ; Calculate CRC for ROM buffer
+    ; Calculate CRC for VERA firmware buffer
     lda vera_buf_addr
     sta r1
     lda vera_buf_addr+1
