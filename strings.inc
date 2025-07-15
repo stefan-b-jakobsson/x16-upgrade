@@ -311,7 +311,8 @@ str_smc_bad_bootloader3:
     .byt "Bad v2, confirmed",13, 0
 
 str_smc_unknown_bootloader:
-    .byt "Unknown version", 13, 0
+    .byt "Unknown version, not advised to continue", 13
+    .byt "Press any key (ESC Abort)", 13, 0
 
 str_smc_wait_key:
     .byt "Press any key...",13,0
