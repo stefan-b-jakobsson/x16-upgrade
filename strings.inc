@@ -296,7 +296,12 @@ str_smc_bootloader:
     .byt "Bootloader...",0
 
 str_smc_no_bootloader:
-    .byt "No bootloader", 13,0
+    .byt "No bootloader", 13, 0
+
+str_smc_bootloader_undetermined:
+    .byt "Bootloader version undetermined", 13
+    .byt "Updating the SMC not recommended", 13
+    .byt "Press any key (ESC abort)", 13, 0
 
 str_smc_bootloader_unsupported:
     .byt "Unsupported version", 13, 0
@@ -311,7 +316,12 @@ str_smc_bad_bootloader3:
     .byt "Bad v2, confirmed",13, 0
 
 str_smc_unknown_bootloader:
-    .byt "Unknown version, not advised to continue", 13
+    .byt "Bootloader version unknown", 13
+    .byt "Updating the SMC not recommended", 13
+    .byt "Press any key (ESC Abort)", 13, 0
+
+str_smc_downgrade:
+    .byt "Downgrading below version 47.2.3 not recommended", 13
     .byt "Press any key (ESC Abort)", 13, 0
 
 str_smc_wait_key:

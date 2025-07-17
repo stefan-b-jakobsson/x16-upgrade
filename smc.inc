@@ -118,17 +118,44 @@ SMC_RAM_BUF = $6100
     print 0, str_smc
 
 t1:
-    ; Test 1: Firmware version (>= SMC_MIN_VERSION)
+    ; Test 1: Firmware version (>= SMC_MIN_VERSION) and downgrade below 47.2.3 (not recommended)
     print 1, str_smc_firmware
     lda smc_cur_version
     cmp #SMC_MIN_VERSION
-    bcc :+
+    bcc t1_fail
 
+    lda header_smc_ver
+    ldy header_smc_ver+1
+    ldx header_smc_ver+2
+    jsr smc_compare_version_number
+    bcc t1_ok ; Not downgrading
+    
+    lda header_smc_ver
+    cmp #47
+    bcc :+
+    bne t1_ok
+    lda header_smc_ver+1
+    cmp #2
+    bcc :+
+    bne t1_ok
+    lda header_smc_ver+2
+    cmp #3
+    bcs t1_ok
+
+:   print 1, str_warn_cr
+    print 2, str_smc_downgrade
+    jsr util_wait_keypress
+    cmp #$6e
+    bne t2
+    jmp fail
+
+t1_ok:
     ; t1: OK
     print 1, str_ok_cr
     bra t2
 
-:   ; t1: Fail
+t1_fail:   
+    ; t1: Fail
     print 1, str_fail_cr
     print 2, str_smc_firmware_unsupported
     jmp fail
@@ -166,10 +193,27 @@ t3:
     lda smc_bootloader
     bne t4
     
-    ; Test 3, fail
+    lda #47
+    ldy #2
+    ldx #3
+    jsr smc_compare_version_number
+    bcc t3_undetermined
+
+    ; If SMC version >= 47.2.3, bootloader not installed
+t3_not_installed:
     print 1, str_fail_cr
     print 2, str_smc_no_bootloader
     jmp fail
+    
+    ; If SMC version < 47.2.3, bootloader undetermined - version >= 3 or not installed
+t3_undetermined:
+    print 1, str_warn_cr
+    print 2, str_smc_bootloader_undetermined
+    jsr util_wait_keypress
+    cmp #$6e ; ESC
+    bne :+ ; Continue
+    jmp fail ; Abort
+:   jmp t7
 
 t4:
     ; Test 4: Bootloader supported, >= SMC_BOOTLOADER_MIN and <= SMC_BOOTLOADER_MAX
@@ -195,28 +239,37 @@ t5:
 :   ; SMC firware is >= 47.2.3, continue
     jsr smc_get_bootloader_crc
     cmp #0  ; Known good bootloader
-    bne :+
+    bne t5_bad
     print 1, str_ok_cr
     jmp t7
 
-:   cmp #1  ; Known bad bootloader
-    bne :+
+t5_bad:
+    cmp #1  ; Known bad bootloader
+    bne t5_unknown
     print 1, str_warn_cr
     print 2, str_smc_bad_bootloader3
     print 2, str_f1_help_esc_abort
+t5_kp:
     jsr util_wait_keypress
+    cmp #$70 ; f1
+    bne :+
     jsr help_show
     lda #3
     jsr help_bad_bootloader
-    jmp t7
+    bra t5_kp
+:   cmp #$6e ; ESC
+    bne :+
+    jmp fail
+:   jmp t7
 
-:   cmp #2  ; Unknown bootloader
-    beq :+
-    jmp t7
-
-:   print 1, str_warn_cr
+t5_unknown:
+    print 1, str_warn_cr
     print 2, str_smc_unknown_bootloader
-    bra t7
+    jsr util_wait_keypress
+    cmp #$6e
+    bne :+
+    jmp fail
+:   jmp t7
 
 t6: 
     ; Test 6: Bad bootloader v2 (high risk or low risk)
@@ -250,8 +303,8 @@ t6h:
     bra :-
 
 :   cmp #$6e ; ESC key code
-    beq fail
-    bra t7
+    bne t7 
+    jmp fail
  
     ; Low risk
 t6l:
@@ -268,10 +321,11 @@ t6l:
     bra :-
 
 :   cmp #$6e ; ESC key code
-    beq fail
+    bne t7
+    jmp fail
 
 t7:
-    ; Test 7: Load SMC firmware into RAM buffer
+    ; Test 8: Load SMC firmware into RAM buffer
     sec ; Following prompt abortable
     jsr vera_select_sdcard
     bcc :+
