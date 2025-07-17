@@ -213,7 +213,6 @@ crc_err:
     print 1, str_crc_error
 
 abort:
-    print 1,str_aborted
     lda #ROM_STATUS_UPDATE_FAIL
     sta rom_status
     sec

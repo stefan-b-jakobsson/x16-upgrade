@@ -60,7 +60,7 @@ str2_pkg_utc:
     .byt " UTC",13,13,13, 0
 
 str2_pkg_components:
-    .byt "COMPONENTS TO BE INSTALLED", 13, 13, 0
+    .byt "COMPONENTS TO BE UPDATED", 13, 13, 0
 
 str2_rom:
     .byt "ROM.: ", 0
@@ -197,9 +197,6 @@ str_verifying:
 str_ok_cr:
     .byt "OK", 13, 0
 
-str_aborted:
-    .byt "Aborted", 13, 0
-
 str_fail_cr:
     .byt "FAIL", 13, 0
 
@@ -301,7 +298,7 @@ str_smc_no_bootloader:
 str_smc_bootloader_undetermined:
     .byt "Bootloader version undetermined", 13
     .byt "Updating the SMC not recommended", 13
-    .byt "Press any key (ESC abort)", 13, 0
+    .byt "Press any key (ESC Abort)", 13, 0
 
 str_smc_bootloader_unsupported:
     .byt "Unsupported version", 13, 0
@@ -321,7 +318,7 @@ str_smc_unknown_bootloader:
     .byt "Press any key (ESC Abort)", 13, 0
 
 str_smc_downgrade:
-    .byt "Downgrading below version 47.2.3 not recommended", 13
+    .byt "Downgrading below v47.2.3 not recommended", 13
     .byt "Press any key (ESC Abort)", 13, 0
 
 str_smc_wait_key:

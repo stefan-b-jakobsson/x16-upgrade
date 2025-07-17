@@ -329,7 +329,6 @@ t7:
     sec ; Following prompt abortable
     jsr vera_select_sdcard
     bcc :+
-    print 1,str_aborted
     bra fail
 
 :   print 1, str_loading

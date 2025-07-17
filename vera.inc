@@ -244,7 +244,6 @@ err:
 :   clc ; following prompt not abortable
     jsr vera_select_flash
     bcc :+
-    print 1, str_aborted
     lda #VERA_STATUS_VERIFY_FAIL
     sta vera_status
     sec
@@ -646,7 +645,6 @@ keypress:
 abort:
     lda flags
     beq loop ; Not allowed to abort
-    print 2, str_aborted
     sec
     rts
 
@@ -714,7 +712,6 @@ keypress:
 abort:
     lda flags
     beq loop ; Not allowed to abort
-    print 2, str_aborted
     sec
     rts
 
