@@ -419,8 +419,18 @@ wait_key:
     cmp #0 ; When bootloader is started, reading this command offset returns 0
     bne wait_key
 
+    ; Try to read bootloader version from the bootloader itself, available since bootloader v3
+    ldx #SMC_ADDR
+    ldy #SMC_BOOTLADER_GET_VER
+    jsr I2C_READ_BYTE
+    cmp #0 ; Bootloader v1 and v2 should return 0
+    beq :+
+    cmp #$ff ; Should not happen if the bootloader is started
+    beq :+
+    sta smc_bootloader ; Store bootloader version
+
     ; Setup variables
-    stz count               ; Clear byte count
+:   stz count               ; Clear byte count
     stz count+1
 
     stz checksum            ; Clear checksum
