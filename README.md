@@ -1,6 +1,6 @@
 # X16-UPGRADE
 
-**WARNING**: This tool is under development, and is highly experimental.
+**WARNING**: This tool is under development, and is experimental.
 
 ## Introduction
 
@@ -15,6 +15,8 @@ provides more in-depth information about possible warnings and errors that are d
 while updating.
 
 ## User Interface
+
+### General
 
 The program's user interface consists of multiple screens, one for each step of the
 upgrade process.
@@ -39,11 +41,7 @@ The active widget's action is performed when you press the Return key:
 - A button is clicked
 
 
-## Choose Package File
-
-<p>
-<img width="500" alt="screen01 – medel" src="https://github.com/user-attachments/assets/e69b7025-1906-459f-9a6e-9dca377ff672" />
-<br><i>Screen 1: Type in package file name.</i></p>
+### Choose Package File
 
 At the first screen, the user is prompted to enter the name of a package file.
 
@@ -74,11 +72,7 @@ them with ```pip install -r script/requirements.txt``` or individually with ```p
 
 More information on the package file format is found [here](doc/package-format.md).
 
-## Package and Upgrade Summary
-
-<p>
-<img width="500" alt="screen02a – medel" src="https://github.com/user-attachments/assets/35ad82b7-3e4d-4a8f-929a-31dcee7d7192" />
-<br><i>Screen 2a: Package summary.</i></p>
+### Package and Upgrade Summary
 
 At the second screen, some general information about the selected package file is displayed:
 
@@ -86,8 +80,8 @@ At the second screen, some general information about the selected package file i
 - Name of the creator of the package
 - Date and time when the package was created (UTC)
 
-After that follows a list of firmware components to be installed including the
-version numbers of these new components.
+After that follows a list of firmware components to be installed and their
+respective version numbers.
 
 The Kernal ROM version is prefixed with "R" if it's an official release, and
 "PR" if it's a pre-release. If it's a custom build, the word "Custom" is displayed".
@@ -95,18 +89,15 @@ The Kernal ROM version is prefixed with "R" if it's an official release, and
 The respective version numbers of the VERA and SMC are displayed as such (major.minor.patch, for instance
 47.0.0).
 
-The program by default selects all three components to be installed. You may
-press the Custom button to select only the components you want to upgrade. 
-Please note that a custom install requires that you verify yourself that the components 
-to be upgrade are compatible with the components that are not updated.
+The program by default selects all three components for update. You may
+press the Custom button to select only the components you want. 
+Please note that a custom update requires that you verify yourself that the components 
+to be updated are compatible with the components that are not updated.
 
-<p>
-<img width="500" alt="screen02b – medel" src="https://github.com/user-attachments/assets/2541e8a8-fce6-43da-82bb-eb8ca1617922" />
-<br><i>Screen 2b: Select components to upgrade.</i></p>
 
-## Pre-upgrade Checks
+### Pre-upgrade Checks
 
-The pre-upgrade checks described below are run before the update begins. No changes are
+The pre-upgrade checks are done before the update begins. No changes are
 made to the installed components during this stage. The purpose of the pre-upgrade checks 
 is to verify that it will actually be possible to install all the selected components.
 
@@ -114,134 +105,214 @@ It is not possible to proceed with the update if any of the pre-upgrade checks f
 case you need to fix the issue, or unselect the component that fails the pre-upgrade
 checks.
 
-### Kernal ROM
+Some of the pre-checks raise warnings that you may ignore after consideration.
 
-| Issue               | Solution                                                                          | 
-|---------------------|-----------------------------------------------------------------------------------| 
-| Write-enabled error | Ensure JP1 on the main board is closed, and try again.                            |
-| Chip ID error       | Ensure the ROM chip is an SST39SF040, and that it's properly seated in the socket.|
-| Load error          | Try to restart the program.                                                       |
+### Install Updates
 
-<p>
-<img width="500" alt="screen03f" src="https://github.com/user-attachments/assets/3a889df0-2050-4215-ae6f-99eb60b59f20" />
-<br><i>Screen 3a: Pre-upgrade checks - ROM write-enable jumper (J1) not installed.</i></p>
-
-<p>
-<img width="500" alt="screen03g" src="https://github.com/user-attachments/assets/184aa9e8-5d22-4beb-9d0f-95c893dee9e8" />
-<br><i>Screen 3b: ROM write enable jumper (J1) help screen.</i></p>
-
-### SMC
-
-| Issue                     | Solution                                                                      |
-|---------------------------|-------------------------------------------------------------------------------|
-| Firmware unsupported      | Use external programmer if the firmware is less than 43.0.0.                  |
-| Write-enabled error       | Use external programmer to set the SMC fuses.                                 |
-| Bootloader not found      | Use external programmer to install a bootloader.                              |
-| Bootloader unsupported    | Check if there is a newer version of X16UPGRADE that suppports the bootloader.|
-| Bad bootloader, confirmed | Prepare to follow the update procedure for the bad bootloader.                |
-| Bad bootloader, high risk | Prepare to follow the update procedure for the bad bootloader.                |
-| Bad bootloader, low risk  | Prepare to follow the update procedure for the bad bootloader.                |
-| Bootloader, unknown       | An unknown version of the bootloader is installed, proceed at your own risk.  |
-| Load error                | Try to restart the program.                                                   |
-
-Updating the SMC with an external programmer requires that the SMC chip is removed from
-the main board. Instructions on how to program the SMC are found [here](https://github.com/X16Community/x16-smc/blob/main/doc/update-guide.md#external-programmer).
-
-The SMC fuses control, amongst other, the microcontroller speed, and whether or not the SMC
-is write-enabled. The fuses can only be programmed using an external programmer. Information about 
-programming the fuses is found [here](https://github.com/X16Community/x16-smc-bootloader) under the Fuse Settings header.
-
-If there is a risk that you have the "bad" SMC bootloader you need to prepare to manually
-reset the SMC at the end of the update process. If you just turn off the computer, the SMC
-will most likely be corrupted. Instructions on the update procedure with the bad bootloader
-are found [here](https://github.com/X16Community/x16-smc/blob/main/doc/update-with-bad-bootloader-v2.md).
-
-<p>
-<img width="500" alt="screen03a – medel" src="https://github.com/user-attachments/assets/98190a34-c781-4bf0-a8bd-c2001ee748bc" />
-<br><i>Screen 3c: Pre-upgrade checks - Bad bootloader warning.</i></p>
-
-<p>
-<img width="500" alt="screen03b – medel" src="https://github.com/user-attachments/assets/2f16a5c1-8103-4231-b2ee-a0afa347feae" />
-<br><i>Screen 3d: Bad bootloader help screen.</i></p>
-
-### VERA
-
-| Issue                     | Solution                                                       |
-|---------------------------|----------------------------------------------------------------|
-| Load error                | Try to restart the program.                                    |
-| Close JP1                 | When prompted, JP1 on the VERA must be closed                  |
-
-<p>
-<img width="500" alt="screen03c – medel" src="https://github.com/user-attachments/assets/c69f5b38-e008-4919-910b-1e1a8f987f7c" />
-<br><i>Screen 3e: Pre-upgrade checks - VERA.</i></p>
-
-<p>
-<img width="500" alt="screen03d – medel" src="https://github.com/user-attachments/assets/e65b938f-e9ee-4ac9-9934-32dddf055390" />
-<br><i>Screen 3f: VERA jumper JP1 help screen.</i></p>
-
-<p>
-<img width="500" alt="screen03e – medel" src="https://github.com/user-attachments/assets/b54a0c27-a204-40ba-bdee-2d86fa82b373" />
-<br><i>Screen 3g: Pre-upgrade checks complete.</i></p>
-
-## Upgrading Firmware
-
-### VERA
-
-| Issue                     | Solution                                                       |
-|---------------------------|----------------------------------------------------------------|
-| Close JP1                 | JP1 on the VERA was closed during the pre-upgrade checks. Ensure it is still closed. |
-| Verify error              | Follow procedure described below. |
-| Open JP 1                 | When prompted, open JP1 again. |
-
-The program exits if the VERA update fails. Next time you reset or power cycle the system, the
-VERA will configure the FPGA from the likely corrupted firmware stored in flash memory. The
-system will most likely not work.
-
-Try to install the VERA firmware again without resetting or power cycling the system.
-
-Instructions on how to recover a VERA board using an external programmer are found [here](https://github.com/X16Community/x16-docs/blob/master/X16%20Reference%20-%20Appendix%20B%20-%20VERA%20Recovery.md#appendix-b-vera-firmware-recovery).
-
-<p>
-<img width="500" alt="screen05a – medel" src="https://github.com/user-attachments/assets/2462725f-657e-4b7f-b33c-038e87638bb2" />
-<br><i>Screen 5a: VERA upgrade complete, prompt to uninstall jumper JP1.</i></p>
-
-<p>
-<img width="500" alt="screen05b – medel" src="https://github.com/user-attachments/assets/5d0ef748-5318-4ca3-81c3-69eef6710d24" />
-<br><i>Screen 5b: Jumper JP1 uninstall help screen.</i></p>
+After successful pre-upgrade checks, you may proceed to install the
+updates. Follow the on-screen instructions.
 
 
-### ROM
+## Errors, Warnings and Other Messages
 
-| Issue                     | Solution                                                       |
-|---------------------------|----------------------------------------------------------------|
-| Verify error              | Follow the procedure described below.                          |
+### Common Messages
 
-If the Kernal ROM update fails you must recover it with an external programmer. To do that
-you must first remove the ROM chip from its socket, and place it in the programmer. On top of the
-ROM chip you find the model name "SST39SF040". Use the programmer's software to write the 
-rom.bin file to the chip. The rom.bin file is found on the [Github release page](https://github.com/X16Community/x16-rom/releases)
+Selecting SD card...
+&nbsp;&nbsp;Remove jumper from position "JP1" on the VERA board
+- This message is displayed if the program is to access the
+SD card when a jumper is installed in JP1 on the VERA board.
+- The SD card is disabled as long as the jumper is installed.
 
-<p>
-<img width="500" alt="screen05c – medel" src="https://github.com/user-attachments/assets/ca95328a-df99-47fb-9594-704250e678f3" />
-<br><i>Screen 5c: ROM upgrade complete.</i></p>
+Selecting VERA flash...
+&nbsp;&nbsp;Install jumper in position "JP1" on the VERA board
+- This message is displayed if the program is to access the
+VERA flash memory when a jumper is not installed in JP1 on the VERA board.
+- Install the jumper to proceed.
+- Later on, the program will prompt you to remove the jumper again in order
+to restore the normal operation of the VERA and the SD card.
 
-### SMC
+Loading... nn% Read error
+- This error message is shown if the program could not read the
+package file. Check that the SD card is working.
 
-| Issue                     | Solution                                                       |
-|---------------------------|----------------------------------------------------------------|
-| Press Power+Reset         | To start the bootloader update procedure you must momentarily press Power+Reset at the same time before the 20 second countdown finishes. |
-| Verify error              | Follow the procedure described below. |
+Loading... nn% Checksum error
+- This error message is shown if the checksum of the loaded data
+does not match the checksum stored in the package file header.
+- The package file is faulty or corrupted. Replace the package file
+and try again.
 
-If the SMC update fails, you can do a recovery update if you have bootloader version 3. Instructions
-on that procedure are found [here](https://github.com/X16Community/x16-smc/blob/main/doc/update-guide.md#in-system-recovery-with-bootloader-v3).
+Validating data... nn% Checksum error
+- If the new firmware was loaded into RAM during the pre-upgrade
+checks, the validity of the data buffer is checked before the
+update starts.
+- If this check fails it is likely due to a bug in the upgrade program.
 
-If that is not an option, you need to recover the SMC using an external programmer, as described [here](https://github.com/X16Community/x16-smc/blob/main/doc/update-guide.md#external-programmer).
+Writing... nn% FAIL
+- This error message is displayed if updating the firmware
+component did not succeed.
 
-<p>
-<img width="500" alt="screen05d – medel" src="https://github.com/user-attachments/assets/a6fd7dd2-700f-4308-9ff6-c527ad7a992b" />
-<br><i>Screen 5d: SMC upgrade - Waiting for Power+Reset to be pressed.</i></p>
+Verifying... nn% FAIL
+- After the update of a firmware component is finished, the
+update is verified by comparing the new firmware loaded into
+RAM with the content of the target chip (ROM, VERA or SMC).
+- If the verification fails, it is likely that computer
+will not work properly, and that you will need an external
+programmer to restore the firmware.
 
-<p>
-<img width="500" alt="screen05e – medel" src="https://github.com/user-attachments/assets/aade25f1-c636-43b9-815f-28eeb3481a9c" />
-<br><i>Screen 5e: Upgrade complete.</i></p>
+### Package File Header Messages
 
+Unrecongnized file header format error
+- This error message is displayed if the package file does not start with
+the expected magic string.
+- The magic string in package file version 1 is PETSCII "X16PKG"
+- In file version 2 it is PETSCII "x16pkg"
+
+Header CRC-16 mismatch error
+- This error message is displayed if the calculated checksum for the 
+header does not match the checksum stored at the end of the header.
+- The error implies that the package file is faulty or corrupted.
+
+Unsupported package file version
+- This error message is displayed if the update program doesn not
+support the package file version. Check if there is a newer
+version of the upgrade program and try again.
+
+### ROM Messages
+
+Write-enabled... FAIL <br>
+&nbsp;&nbsp;Chip is write protected <br> 
+&nbsp;&nbsp;Install jumper in position "J1" <br>
+- The ROM chip is write-protected unless a jumper is installed in position "J1" on the main board.
+- Install the jumper and try again. It is recommended that you install the jumper when the computer is disconnected from power.
+
+Chip ID... FAIL
+- This error message is displayed if the ROM chip does not return the expected Chip ID.
+- Ensure that the ROM chip is an SST39SF040 and that it is properly seated in its socket. Then try again.
+
+### SMC Messages
+
+Firmware... FAIL <br>
+&nbsp;&nbsp;Unsupported version
+- The capability to start the firmware update procedure was added to firmware v 43.0.0.
+- The error message is displayed if the current SMC firmware is older than that.
+- You must update the SMC firmware using an external programmer.
+
+Firmware... WARN <br>
+&nbsp;&nbsp;Downgrading below v47.2.3 not recommended <br>
+&nbsp;&nbsp;Press any key (ESC Abort)
+- This warning is displayed if you are downgrading the SMC firmware and if the new firmware is older than 47.2.3.
+- Firmware versions before 47.2.3 cannot identify bootloader v3.
+- Firmware versions before 45.1.0 cannot start bootloader v3.
+- You may proceed after taking these limitations into account.
+
+Write-enabled... FAIL
+- This error message is displayed if the self-programming fuse bit of the
+SMC chip (an ATtiny 861) is not enabled.
+- Updating the SMC firmware is not possible unless the fuse bit is set up correctly.
+- The fuse bits can only be setup with an external programmer.
+
+Bootloader... FAIL <br>
+&nbsp;&nbsp;No bootloader
+- This error message means that there is no bootloader installed in the SMC.
+- Without a bootloader it is not possible to update the SMC firmware.
+- Use an external programmer to update the SMC.
+
+Bootloader... FAIL <br>
+&nbsp;&nbsp;Unsupported version
+- The bootloader version is not supported by the upgrade program.
+- Check if a new version of the upgrade program has been released, and 
+try using that instead.
+
+Bootloader... WARN <br>
+&nbsp;&nbsp;Bad v2, low risk
+- There is a low risk that the the so called bad bootloader v2 is
+installed.
+- This warning is displayed if bootloader v2 is installed and if
+the current SMC version is older than 47.2.3, but not
+version 45.1.0.
+
+Bootloader... WARN <br>
+&nbsp;&nbsp;Bad v2, high risk
+- There is a high risk that the so called bad bootloader v2 is
+installed.
+- This warning is displayed if bootloader v2 is installed and
+if the current SMC version is 45.1.0. If the board was
+originally delivered with that firmware version, is is
+almost certain that you have the bad bootloader.
+
+Bootloader... WARN <br>
+&nbsp;&nbsp;Bad v2, confirmed
+- This warning is displayed if the upgrade program can
+confirm definately that the bad bootloader v2 is installed.
+- The upgrade program can do that if the current firmware
+version is 47.2.3 or newer.
+
+Bootloader... WARN <br>
+&nbsp;&nbsp;Non-standard bootloader <br>
+&nbsp;&nbsp;Updating the SMC not recommended <br>
+&nbsp;&nbsp;Press any key (ESC Abort) <br>
+- This warning is displayed if the bootloader identify
+itself as one of the bootloader versions supported by
+the upgrade program, but the checksum of the bootloader
+code does not match any of the official releases.
+- You may have a custom bootloader or the bootloader
+code may have been corrupted.
+- It is not recommended that you proceed unless you
+know that there is a custom bootloader that you
+trust.
+- The check is available since firmware version XX.
+
+Bootloader... WARN <br>
+&nbsp;&nbsp;Bootloader version undetermined <br>
+&nbsp;&nbsp;Updating the SMC not recommended <br>
+&nbsp;&nbsp;Press any key (ESC Abort)
+- todo
+
+Momentarily press Power+Reset <br>
+at the same time... 20
+- This message is displayed before starting the SMC firmware
+update.
+- By pressing the Power and Reset buttons at the same time 
+you confirm that you want to start the update procedure. This
+is protection against unwanted updates.
+- If you do not press Power and Reset within the 20 second
+time limit, the program will try again and a new
+20 second countdown is displayed.
+- If you only press the Power button, the system will turn off
+without update the SMC firmware. If you you only press the
+Reset button, the system will reset without updating the
+firmware.
+
+Update failed. Last err: nn <br>
+- This message is displayed if the SMC firmware update
+failed. The last error number is displayed.
+- The error numbers have the following meaning:
+    - 2: Packet size not 9
+    - 3: Checksum error
+    - 5: Overwriting bootloader area
+
+Bootloader v1 detected. Disconnect <br>
+the computer from power for at least 20 <br>
+seconds to finish the update.
+- This message is displayed if bootloader v1 is installed.
+- Bootloader v1 waits in an infinite loop after finishing
+the update. You must disconnect the computer from
+power to reset the SMC.
+
+Corrupted (bad) bootloader v2 detected. <br>
+DO NOT disconnect the computer from power. <br>
+Stand by for help...
+- This message is displayed if the bad bootloader v2 is installed.
+- After the countdown, a help screen is displayed with instructions on how
+to finish the update.
+- The official bootloader v2 resets the SMC and turns off the system
+after finishing the update.
+- The bad bootloader v2 hangs at the final stage of the update,
+waiting for the SMC to be reset. After the reset, bootloader v2
+sets up the first 64 bytes of the SMC flash memory.
+- If you disconnect the computer from power, the SMC will most
+likely be corrupted, and you need to install the firmware using
+an external programmer.
+- Instead you need to reset the SMC by connecting pin #10 to ground
+using a piece of wire, as described in the help screen displayed
+after the countdown.
