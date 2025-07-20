@@ -142,8 +142,8 @@ def btnLatest_click():
 
     # Set package description
     if rom_version != None and vera_version != None and smc_version != None:
-        pkg_description.set("X16 Latest Official Releases")
-        pkg_createdby.set("X16 Community")
+        pkg_description.set("X16 latest releases")
+        pkg_createdby.set("Unknown")
 
 def btnCreate_click():
     # Validate input

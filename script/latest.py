@@ -68,7 +68,7 @@ else:
 
 # Make package
 description = "X16 latest releases"
-createdby = "Unkown"
+createdby = "Unknown"
 
 for i in range(0,len(sys.argv)):
     if len(sys.argv) > i+1 and sys.argv[i+1].startswith("-") == False and len(sys.argv[i+1]) > 0:
