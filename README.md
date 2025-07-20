@@ -4,7 +4,7 @@
 
 ## Introduction
 
-The purpose of this program is to update the three major firmware components of the Commander X16:
+The purpose of this program is to upgrade the three major firmware components of the Commander X16:
 
 - Kernal ROM
 - VERA
@@ -41,7 +41,7 @@ The active widget's action is performed when you press the Return key:
 - A button is clicked
 
 
-### Choose Package File
+### Select Package File
 
 At the first screen, the user is prompted to enter the name of a package file.
 
@@ -51,7 +51,7 @@ three firmware components (ROM, VERA, and SMC).
 Creators of package files are responsible to make sure that the firmware components in a package 
 are compatible with each other.
 
-You can create your own package file with tools included in this project:
+You can create your own package files with tools included in this project:
 
 - Type ```make latest``` in the project root folder. This command downloads the latest
 releases of the ROM, the VERA and the SMC, and builds a package of them. You can optionally
@@ -90,7 +90,7 @@ The respective version numbers of the VERA and SMC are displayed as such (major.
 47.0.0).
 
 The program by default selects all three components for update. You may
-press the Custom button to select only the components you want. 
+press the Custom button to select only some of the components for update. 
 Please note that a custom update requires that you verify yourself that the components 
 to be updated are compatible with the components that are not updated.
 
@@ -117,13 +117,13 @@ updates. Follow the on-screen instructions.
 
 ### Common Messages
 
-Selecting SD card...
+Selecting SD card... <br>
 &nbsp;&nbsp;Remove jumper from position "JP1" on the VERA board
 - This message is displayed if the program is to access the
 SD card when a jumper is installed in JP1 on the VERA board.
 - The SD card is disabled as long as the jumper is installed.
 
-Selecting VERA flash...
+Selecting VERA flash... <br>
 &nbsp;&nbsp;Install jumper in position "JP1" on the VERA board
 - This message is displayed if the program is to access the
 VERA flash memory when a jumper is not installed in JP1 on the VERA board.
@@ -187,7 +187,7 @@ Write-enabled... FAIL <br>
 
 Chip ID... FAIL
 - This error message is displayed if the ROM chip does not return the expected Chip ID.
-- Ensure that the ROM chip is an SST39SF040 and that it is properly seated in its socket. Then try again.
+- Ensure that the ROM chip is an SST39SF040 and try again.
 
 ### SMC Messages
 
@@ -244,7 +244,7 @@ Bootloader... WARN <br>
 &nbsp;&nbsp;Bad v2, confirmed
 - This warning is displayed if the upgrade program can
 confirm definately that the bad bootloader v2 is installed.
-- The upgrade program can do that if the current firmware
+- This is possible to check if the current firmware
 version is 47.2.3 or newer.
 
 Bootloader... WARN <br>
@@ -260,13 +260,14 @@ code may have been corrupted.
 - It is not recommended that you proceed unless you
 know that there is a custom bootloader that you
 trust.
-- The check is available since firmware version XX.
 
 Bootloader... WARN <br>
 &nbsp;&nbsp;Bootloader version undetermined <br>
 &nbsp;&nbsp;Updating the SMC not recommended <br>
 &nbsp;&nbsp;Press any key (ESC Abort)
-- todo
+- Firmware versions before 47.2.3 cannot determine
+if bootloader v3 is installed or if there is no
+bootloader installed
 
 Momentarily press Power+Reset <br>
 at the same time... 20
