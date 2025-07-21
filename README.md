@@ -314,3 +314,5 @@ an external programmer.
 - Instead you need to reset the SMC by connecting pin #10 to ground
 using a piece of wire, as described in the help screen displayed
 after the countdown.
+- Instructions on how to ground SMC pin #10 are found 
+[here](https://github.com/X16Community/x16-smc/blob/main/doc/update-with-bad-bootloader-v2.md).
