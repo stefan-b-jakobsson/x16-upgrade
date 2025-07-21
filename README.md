@@ -1,25 +1,22 @@
 # X16-UPGRADE
 
-**WARNING**: This tool is under development, and is experimental.
+**WARNING**: This tool is experimental.
 
 ## Introduction
 
-The purpose of this program is to upgrade the three major firmware components of the Commander X16:
+This program upgrades the three major firmware components of the Commander X16:
 
 - Kernal ROM
 - VERA
 - SMC
 
-It is recommended that you have access to this README file during an update. The README file
-provides more in-depth information about possible warnings and errors that are displayed
-while updating.
+Keep this README accessible during updates for troubleshooting.
 
 ## User Interface
 
 ### General
 
-The program's user interface consists of multiple screens, one for each step of the
-upgrade process.
+The user interface of the program guides you through each step of the upgrade process with dedicated screens.
 
 - Screen 1: Select package file
 - Screen 2: Display information about the selected package file
@@ -48,8 +45,7 @@ At the first screen, the user is prompted to enter the name of a package file.
 The package file format is made especially for this tool. A package file contains all 
 three firmware components (ROM, VERA, and SMC).
 
-Creators of package files are responsible to make sure that the firmware components in a package 
-are compatible with each other.
+Package creators must ensure all included firmware components are compatible with each other.
 
 You can create your own package files with tools included in this project:
 
@@ -66,7 +62,7 @@ of them. The GUI inferface also supports downloading the latest releases from Gi
 - You may also download the .py files in the script folder, and start the
 GUI interface with ```python gui_pkg.py```
 
-The python scripts in the scripts folder depend on two non-standard libraries. You can install
+The python scripts in the scripts folder require two non-standard libraries. You can install
 them with ```pip install -r script/requirements.txt``` or individually with ```pip install intelhex``` and
 ```pip install certifi```
 
@@ -86,16 +82,15 @@ respective version numbers.
 The Kernal ROM version is prefixed with "R" if it's an official release, and
 "PR" if it's a pre-release. If it's a custom build, the word "Custom" is displayed".
 
-The respective version numbers of the VERA and SMC are displayed as such (major.minor.patch, for instance
-47.0.0).
+VERA and SMC version numbers follow major.minor.patch (e.g. 47.0.0).
 
-The program by default selects all three components for update. You may
-press the Custom button to select only some of the components for update. 
+By default, the program selects all three components for updating. You may
+press the Custom button to select only some of the components. 
 Please note that a custom update requires that you verify yourself that the components 
 to be updated are compatible with the components that are not updated.
 
 
-### Pre-upgrade Checks
+### Pre-Upgrade Checks
 
 The pre-upgrade checks are done before the update begins. No changes are
 made to the installed components during this stage. The purpose of the pre-upgrade checks 
@@ -137,7 +132,7 @@ package file. Check that the SD card is working.
 
 Loading... nn% Checksum error
 - This error message is shown if the checksum of the loaded data
-does not match the checksum stored in the package file header.
+doesn't match the checksum stored in the package file header.
 - The package file is faulty or corrupted. Replace the package file
 and try again.
 
@@ -161,15 +156,15 @@ programmer to restore the firmware.
 
 ### Package File Header Messages
 
-Unrecongnized file header format error
-- This error message is displayed if the package file does not start with
+Unrecognized file header format error
+- This error message is displayed if the package file doesn't start with
 the expected magic string.
 - The magic string in package file version 1 is PETSCII "X16PKG"
 - In file version 2 it is PETSCII "x16pkg"
 
 Header CRC-16 mismatch error
 - This error message is displayed if the calculated checksum for the 
-header does not match the checksum stored at the end of the header.
+header doesn't match the checksum stored at the end of the header.
 - The error implies that the package file is faulty or corrupted.
 
 Unsupported package file version
@@ -186,7 +181,7 @@ Write-enabled... FAIL <br>
 - Install the jumper and try again. It is recommended that you install the jumper when the computer is disconnected from power.
 
 Chip ID... FAIL
-- This error message is displayed if the ROM chip does not return the expected Chip ID.
+- This error message is displayed if the ROM chip doesn't return the expected Chip ID.
 - Ensure that the ROM chip is an SST39SF040 and try again.
 
 ### SMC Messages
@@ -200,7 +195,7 @@ Firmware... FAIL <br>
 Firmware... WARN <br>
 &nbsp;&nbsp;Downgrading below v47.2.3 not recommended <br>
 &nbsp;&nbsp;Press any key (ESC Abort)
-- This warning is displayed if you are downgrading the SMC firmware and if the new firmware is older than 47.2.3.
+- This warning is displayed if you are downgrading the SMC firmware and if the new firmware is below 47.2.3.
 - Firmware versions before 47.2.3 cannot identify bootloader v3.
 - Firmware versions before 45.1.0 cannot start bootloader v3.
 - You may proceed after taking these limitations into account.
@@ -237,13 +232,13 @@ Bootloader... WARN <br>
 installed.
 - This warning is displayed if bootloader v2 is installed and
 if the current SMC version is 45.1.0. If the board was
-originally delivered with that firmware version, is is
+originally delivered with that firmware version, it is
 almost certain that you have the bad bootloader.
 
 Bootloader... WARN <br>
 &nbsp;&nbsp;Bad v2, confirmed
 - This warning is displayed if the upgrade program can
-confirm definately that the bad bootloader v2 is installed.
+confirm definitely that the bad bootloader v2 is installed.
 - This is possible to check if the current firmware
 version is 47.2.3 or newer.
 
@@ -254,7 +249,7 @@ Bootloader... WARN <br>
 - This warning is displayed if the bootloader identify
 itself as one of the bootloader versions supported by
 the upgrade program, but the checksum of the bootloader
-code does not match any of the official releases.
+code doesn't match any of the official releases.
 - You may have a custom bootloader or the bootloader
 code may have been corrupted.
 - It is not recommended that you proceed unless you
@@ -267,7 +262,9 @@ Bootloader... WARN <br>
 &nbsp;&nbsp;Press any key (ESC Abort)
 - Firmware versions before 47.2.3 cannot determine
 if bootloader v3 is installed or if there is no
-bootloader installed
+bootloader installed.
+- Proceed id you know that bootloader v3 is
+installed.
 
 Momentarily press Power+Reset <br>
 at the same time... 20
@@ -302,7 +299,7 @@ power to reset the SMC.
 
 Corrupted (bad) bootloader v2 detected. <br>
 DO NOT disconnect the computer from power. <br>
-Stand by for help...
+Standby for help...
 - This message is displayed if the bad bootloader v2 is installed.
 - After the countdown, a help screen is displayed with instructions on how
 to finish the update.

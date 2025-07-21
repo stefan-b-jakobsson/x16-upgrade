@@ -342,7 +342,7 @@ str_smc_bootloader_v1:
 str_smc_bad_bootloader:
     .byt 13, "Corrupted (bad) bootloader v2 detected. ", 13
     .byt "DO NOT disconnect the computer from power. ", 13
-    .byt "Stand by for help... ", 0
+    .byt "Standby for help... ", 0
 
 ; *********************************************************
 ; Help screens
