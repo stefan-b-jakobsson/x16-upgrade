@@ -12,6 +12,8 @@ This program upgrades the three major firmware components of the Commander X16:
 
 Keep this README accessible during updates for troubleshooting.
 
+[Short video of running X16 Upgrade](https://youtu.be/loTk5HYImG8).
+
 ## User Interface
 
 ### General
@@ -176,7 +178,7 @@ header doesn't match the checksum stored at the end of the header.
 - The error implies that the package file is faulty or corrupted.
 
 Unsupported package file version
-- This error message is displayed if the update program doesn not
+- This error message is displayed if the update program doesn't
 support the package file version. Check if there is a newer
 version of the upgrade program and try again.
 
