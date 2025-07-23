@@ -134,7 +134,7 @@ str5_header:
     .byt "INSTALLING UPDATES", 13, 13, 0
 
 str5_reset_msg:
-    .byt "System reset... ", 0
+    .byt "Wait for system reset... ", 0
 
 
 ; Screen 6: Warning
@@ -332,7 +332,7 @@ str_smc_update_failed:
     .byt "Update failed. Last err: ", 0
 
 str_smc_reset:
-    .byt "System shutdown... ", 0
+    .byt "Wait for system shutdown... ", 0
 
 str_smc_bootloader_v1:
     .byt 13, "Bootloader v1 detected. Disconnect "

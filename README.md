@@ -19,11 +19,11 @@ Keep this README accessible during updates for troubleshooting.
 The user interface of the program guides you through each step of the upgrade process with dedicated screens.
 
 - Screen 1: Select package file
-- Screen 2: Display information about the selected package file
+- Screen 2: Information about the selected package file
     - Custom: Manually select which components you want to update
-- Screen 3: Run pre-upgrade checks
-- Screen 4: Show disclaimer & warnings
-- Screen 5: Run updates
+- Screen 3: Pre-upgrade checks
+- Screen 4: Disclaimer & warnings
+- Screen 5: Updating firmware
 
 You interact with the program through widgets, such as buttons and checkboxes.
 
@@ -40,7 +40,7 @@ The active widget's action is performed when you press the Return key:
 
 ### Select Package File
 
-At the first screen, the user is prompted to enter the name of a package file.
+At the first screen, you are prompted to enter the name of a package file.
 
 The package file format is made especially for this tool. A package file contains all 
 three firmware components (ROM, VERA, and SMC).
@@ -100,7 +100,7 @@ It is not possible to proceed with the update if any of the pre-upgrade checks f
 case you need to fix the issue, or unselect the component that fails the pre-upgrade
 checks.
 
-Some of the pre-checks raise warnings that you may ignore after consideration.
+Some of the pre-upgrade checks raise warnings that you may ignore after considering the risks.
 
 ### Install Updates
 
@@ -117,6 +117,7 @@ Selecting SD card... <br>
 - This message is displayed if the program is to access the
 SD card when a jumper is installed in JP1 on the VERA board.
 - The SD card is disabled as long as the jumper is installed.
+- Remove the jumper and proceed with the update.
 
 Selecting VERA flash... <br>
 &nbsp;&nbsp;Install jumper in position "JP1" on the VERA board
@@ -145,11 +146,18 @@ update starts.
 Writing... nn% FAIL
 - This error message is displayed if updating the firmware
 component did not succeed.
+- If writing fails at the beginning (0%), it is likely that
+the program could not make any changes to the current
+firmware.
+- If writing fails later on, there is a risk that the
+firmware component needs to be restored with an external
+programmer.
 
 Verifying... nn% FAIL
-- After the update of a firmware component is finished, the
-update is verified by comparing the new firmware loaded into
-RAM with the content of the target chip (ROM, VERA or SMC).
+- After finishing the update of a firmware component, the
+update is verified by comparing the content of the target chip 
+(ROM, VERA or SMC) with the new firmware that was intended to be
+installed.
 - If the verification fails, it is likely that computer
 will not work properly, and that you will need an external
 programmer to restore the firmware.
@@ -263,7 +271,7 @@ Bootloader... WARN <br>
 - Firmware versions before 47.2.3 cannot determine
 if bootloader v3 is installed or if there is no
 bootloader installed.
-- Proceed id you know that bootloader v3 is
+- Proceed if you know that bootloader v3 is
 installed.
 
 Momentarily press Power+Reset <br>
