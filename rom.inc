@@ -637,24 +637,19 @@ callback:
 
 ;******************************************************************************
 ; Function name.......: rom_is_write_enabled
-; Purpose.............: Checks if ROM chip is write-enabled
+; Purpose.............: Checks if ROM chip is write-enabled by attempting to
+;                       read the manufacturer ID
 ; Input...............: Nothing
 ; Returns.............: C = 0 => Write-enabled
 ;                       C = 1 => Write protected
 .proc rom_is_write_enabled
-    ; Theory of operation: The function attempts to write the value $ff to 
-    ; address $01:$ffff. The ROM write operation can only change a bit from 
-    ; 1 to 0, and not the other way. Writing $ff will therefore not change 
-    ; the value at the ROM address, even if the ROM chip is write-enabled. 
-    ; If the chip is write-protected, the write operation finishes
-    ; immediately, while it takes some duration to finish if the chip is
-    ; write-enabled. That way we can tell if the chip is write-enabled.
-    lda #$01
-    sta rom_target_bank
-    lda #$ff
-    sta rom_target_addr
-    sta rom_target_addr+1
-    jmp rom_write ; that function returns C=1 if chip is write-protected
+    jsr rom_read_chip_id
+    cpx #<ROM_CHIP_ID
+    bne :+
+    clc
+    rts
+:   sec
+    rts
 .endproc
 
 ;******************************************************************************
