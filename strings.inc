@@ -172,6 +172,14 @@ str7_btn_help:
     .byt "<Help>"
 str7_btn_help_end:
 
+str7_emulator:
+    .byt "X16 Upgrade only works on hardware. "
+    .byt "It looks like you are using an emulator.", 13, 13, 0
+
+str7_btn_continue:
+    .byt "<Continue>"
+str7_btn_continue_end:
+
 ; *********************************************************
 ; Common strings
 ; *********************************************************
@@ -224,7 +232,6 @@ str_cwd_readerr:
 
 str_cwd_overflow:
     .byt "error: current path too long", 13, 0
-
 
 ; *********************************************************
 ; Strings relating the ROM

@@ -29,19 +29,48 @@
 ; Input...............: Nothing
 ; Returns.............: Nothing
 .proc screen7_show
-    ; Check if JP is installed - Return if not
-    jsr vera_jedec
-    bcc :+
-    rts
-
-    ; Clear and init widgets
-:   jsr widget_init
-
     ; Print header
     jsr screen_header
     print 0, str7_header
 
-    ; Print message
+    ; Clear and init widgets
+    jsr widget_init
+
+    ; Check if running in emulator
+    lda EMULATOR_PRESENCE
+    cmp #$36
+    beq :+
+    jmp check_jp1
+
+:   print 0, str7_emulator
+
+    ldx #<str7_btn_continue
+    ldy #>str7_btn_continue
+    lda #str7_btn_continue_end-str7_btn_continue
+    jsr widget_add_button
+    ldx #0
+    ldy #WIDGET_STATE_SELECTED
+    jsr widget_set_state
+
+listen1:
+    jsr widget_listen
+    cpx #0
+    bne listen1
+    rts
+
+ignore:
+    rts
+
+exit_program:
+    rts
+
+check_jp1:
+    ; Check if JP1 is installed - Return if not
+    jsr vera_jedec
+    bcc :+
+    rts
+
+:   ; Print message
     print 0, str7_jp1
 
     ; Add OK button
@@ -60,7 +89,7 @@
     jsr widget_add_button
 
     ; Listen
-listen:
+listen2:
     jsr widget_listen
     
     ; OK button?
@@ -79,11 +108,11 @@ activate_help_btn:
     ldx #1
     ldy #WIDGET_STATE_SELECTED
     jsr widget_set_state
-    bra listen
+    bra listen2
 
     ; Help button?
 :   cpx #1
-    bne listen
+    bne listen2
 
     jsr help_show
     clc
@@ -94,6 +123,6 @@ activate_help_btn:
     ldx #1
     ldy #WIDGET_STATE_ACTIVE
     jsr widget_set_state
-    bra listen
+    bra listen2
 .endproc
     
