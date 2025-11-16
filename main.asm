@@ -36,6 +36,9 @@
 ; Input...............: Nothing
 ; Returns.............: Nothing
 .proc main
+    ; Clear exit request flag
+    stz main_exit_request
+
     ; Backup current working directory
     jsr file_cwd_backup
     cpx #0 ; OK
@@ -128,6 +131,8 @@ clrscr:
 
     ; Show screen 1
     jsr screen1_show
+    lda main_exit_request
+    bne :+
 
     ; Check VERA JP1
     jsr screen7_show
@@ -178,6 +183,7 @@ clrscr:
 .include "screen5.inc"
 .include "screen6.inc"
 .include "screen7.inc"
+.include "screen8.inc"
 
 .include "crc16.inc"
 .include "progress.inc"
@@ -188,3 +194,5 @@ clrscr:
 .include "file.inc"
 
 .include "help.inc"
+
+main_exit_request: .res 1

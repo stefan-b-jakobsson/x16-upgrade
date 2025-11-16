@@ -60,7 +60,7 @@ str2_pkg_utc:
     .byt " UTC",13,13,13, 0
 
 str2_pkg_components:
-    .byt "COMPONENTS TO BE UPDATED", 13, 13, 0
+    .byt "FIRMWARE VERSIONS TO BE INSTALLED", 13, 13, 0
 
 str2_rom:
     .byt "ROM.: ", 0
@@ -172,13 +172,23 @@ str7_btn_help:
     .byt "<Help>"
 str7_btn_help_end:
 
-str7_emulator:
-    .byt "X16 Upgrade only works on hardware. "
-    .byt "It looks like you are using an emulator.", 13, 13, 0
 
-str7_btn_continue:
+; Screen 8: Emulator detected
+
+str8_header:
+    .byt "EMULATOR DETECTED", 13,13, 0
+
+str8_emulator_detected:
+    .byt "X16 Upgrade works on hardware only. "
+    .byt "It looks like you are using an emulator. The program most likely hangs if you continue.", 13, 13, 0
+
+str8_btn_exit:
+    .byt "<Exit>"
+str8_btn_exit_end:
+
+str8_btn_ignore:
     .byt "<Continue>"
-str7_btn_continue_end:
+str8_btn_ignore_end:
 
 ; *********************************************************
 ; Common strings

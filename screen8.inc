@@ -1,4 +1,4 @@
-; Copyright (c) 2024-2025, Stefan Jakobsson
+  ; Copyright (c) 2024-2025, Stefan Jakobsson
 
 ; Redistribution and use in source and binary forms, with or without 
 ; modification, are permitted provided that the following conditions are met:
@@ -24,75 +24,52 @@
 
 
 ;******************************************************************************
-; Function name.......: screen7_show
-; Purpose.............: Shows screen 7 - Prompt user to uninstall JP1
+; Function name.......: screen8_show
+; Purpose.............: Shows screen 8 - Emulator presence
 ; Input...............: Nothing
 ; Returns.............: Nothing
-.proc screen7_show
-    ; Check if JP1 is installed - Return if not
-    jsr vera_jedec
-    bcc :+
+.proc screen8_show
+    ; Check if running in emulator
+    lda EMULATOR_PRESENCE
+    cmp #$36
+    beq :+
+
+    ; Return if emulator not detected
     rts
 
 :   ; Print header
     jsr screen_header
-    print 0, str7_header
+    print 0, str8_header
+    print 0, str8_emulator_detected
 
     ; Clear and init widgets
     jsr widget_init
-    
-    ; Print message
-    print 0, str7_jp1
 
-    ; Add OK button
-    ldx #<str7_btn_ok
-    ldy #>str7_btn_ok
-    lda #str7_btn_ok_end-str7_btn_ok
+    ldx #<str8_btn_exit
+    ldy #>str8_btn_exit
+    lda #str8_btn_exit_end-str8_btn_exit
     jsr widget_add_button
     ldx #0
     ldy #WIDGET_STATE_SELECTED
     jsr widget_set_state
 
-    ; Add help button
-    ldx #<str7_btn_help
-    ldy #>str7_btn_help
-    lda #str7_btn_help_end-str7_btn_help
+    ldx #<str8_btn_ignore
+    ldy #>str8_btn_ignore
+    lda #str8_btn_ignore_end-str8_btn_ignore
     jsr widget_add_button
 
-    ; Listen
 listen:
     jsr widget_listen
-    
-    ; OK button?
     cpx #0
-    bne :+
-
-    jsr vera_jedec  ; Check JP1 status: exit if uninstalled (C=1)
-    bcc activate_help_btn
-    rts
-
-activate_help_btn:
-    ldx #0
-    ldy #WIDGET_STATE_ACTIVE
-    jsr widget_set_state
-    
-    ldx #1
-    ldy #WIDGET_STATE_SELECTED
-    jsr widget_set_state
-    bra listen
-
-    ; Help button?
-:   cpx #1
+    beq exit
+    cpx #1
     bne listen
 
-    jsr help_show
-    clc
-    jsr help_jp1
-    ldx #0
-    ldy #WIDGET_STATE_SELECTED 
-    jsr widget_set_state
-    ldx #1
-    ldy #WIDGET_STATE_ACTIVE
-    jsr widget_set_state
-    bra listen
+ignore:
+    rts
+
+exit:
+    lda #1
+    sta main_exit_request
+    rts
 .endproc

@@ -28,8 +28,14 @@
 ; Input...............: Nothing
 ; Returns.............: Nothing
 .proc screen1_show
+    ; Detect emulator
+    jsr screen8_show
+    lda main_exit_request
+    beq :+
+    rts
+
     ; Check if VERA JP1 is installed - Prompt user to remove it if so
-    jsr screen7_show
+:   jsr screen7_show
 
     ; Clear and init widgets
     jsr widget_init
