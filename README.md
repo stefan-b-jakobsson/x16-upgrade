@@ -1,7 +1,5 @@
 # X16-UPGRADE
 
-**WARNING**: This tool is experimental.
-
 ## Introduction
 
 This program upgrades the three major firmware components of the Commander X16:
